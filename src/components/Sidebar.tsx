@@ -71,12 +71,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <div className="space-y-4">
             <div>
               <img
-                src="https://images.pexels.com/photos/3183150/pexels-photo-3183150.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+                src="https://herramienta-sesgos-equidad-goblab-uai.streamlit.app/~/+/media/da753cc850f5985217dc57e23f1bc344d18b0f033a2cabf6868a67f5.png"
                 alt="ANID Logo"
                 className="h-16 mb-2"
               />
               <p className="text-sm text-gray-600">
                 Subdirección de Investigación Aplicada/Concurso IDeA I+D 2023 proyecto ID23I10357
+              </p>
+            </div>
+          </div>
+          <br></br>
+          <h3 className="text-sm font-medium text-gray-900 mb-4">Exención de responsabilidad</h3>
+          <div className="space-y-4">
+            <div>
+              <p className="text-sm text-gray-600">
+                La herramienta de medición de sesgos y equidad estadística es un recurso diseñado para evaluar el desempeño de los modelos de ciencia de datos e IA en términos de equidad. La herramienta pretende asistir en la identificación de sesgos potenciales, pero no asegura el correcto funcionamiento o eficacia de los sistemas evaluados con ella. La herramienta está diseñada como un soporte para quienes deben tomar decisiones respecto del desempeño de los modelos, con el fin de fomentar prácticas más justas y equitativas en la ciencia de datos.
+              </p>
+              <p className="text-sm text-gray-600">
+                La Universidad Adolfo Ibáñez (UAI) no es responsable de ningún tipo de daño directo, indirecto, incidental, especial o consecuente, ni de pérdidas de beneficios que puedan surgir directa o indirectamente de la aplicación de la herramienta, en el uso o la confianza en los resultados obtenidos a través de ésta.
+              </p>
+              <p className="text-sm text-gray-600">
+                El empleo de las herramientas desarrolladas por la Universidad no implica ni constituye un sello ni certificado de aprobación por parte de esta, respecto al cumplimiento, legal, ético o funcional de un algoritmo de inteligencia artificial.
+              </p>
+              <p className="text-sm text-gray-600">
+                Aquellos interesados en ser considerados como un caso de éxito mediante el uso de estas herramientas de IA responsable deben inscribirse en los pilotos a través del formulario <a href="https://algoritmospublicos.cl/quiero_participar">https://algoritmospublicos.cl/quiero_participar</a>. Es importante destacar que el uso de nuestras.
               </p>
             </div>
           </div>

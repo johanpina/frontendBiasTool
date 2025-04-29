@@ -140,18 +140,6 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   ),
                 },
                 {
-                  name: 'Análisis por Grupos de Referencia',
-                  content: (
-                    <ReferenceGroupAnalysis
-                      protectedColumns={results.protected_attributes || []}
-                      uniqueValues={results.unique_values || {}}
-                      onAnalyze={onBiasAnalysis}
-                      results={results}
-                      loading={loading}
-                    />
-                  ),
-                },
-                {
                   name: 'Análisis de Disparidad',
                   content: (
                     <BiasAnalysisTab
