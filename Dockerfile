@@ -10,7 +10,7 @@ RUN npm install
 COPY . .
 
 # Exponer puerto
-EXPOSE 3000
+EXPOSE 5173
 
 # Comando para iniciar en modo desarrollo
 CMD ["npm", "run", "dev"]
