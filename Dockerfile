@@ -1,6 +1,7 @@
 FROM node:20-alpine AS build
 
 ARG VITE_BASE_API_URL
+ENV VITE_BASE_API_URL=$VITE_BASE_API_URL
 
 # Establecer el directorio de trabajo dentro del contenedor
 WORKDIR /app
