@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
           <div className="space-y-4">
             <div>
               <img
-                src="https://herramienta-sesgos-equidad-goblab-uai.streamlit.app/~/+/media/da753cc850f5985217dc57e23f1bc344d18b0f033a2cabf6868a67f5.png"
+                src="/images/ANID.png"
                 alt="ANID Logo"
                 className="h-16 mb-2"
               />

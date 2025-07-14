@@ -149,7 +149,7 @@ export const DisparityPlotControls: React.FC<DisparityPlotControlsProps> = ({
       <div>
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">
-            Atributos a analizar
+            Variables protegidas a analizar
           </h3>
           <button
             onClick={handleSelectAllAttributes}
@@ -181,7 +181,7 @@ export const DisparityPlotControls: React.FC<DisparityPlotControlsProps> = ({
             onClick={() => setIsAttributesExpanded(!isAttributesExpanded)}
             className="w-full px-4 py-2 text-left border border-gray-300 rounded-lg flex justify-between items-center hover:bg-gray-50 bg-white text-gray-500"
           >
-            <span>Seleccionar atributo...</span>
+            <span>Seleccionar variable protegida...</span>
             <ChevronDown className={`h-5 w-5 transition-transform ${isAttributesExpanded ? 'rotate-180' : ''}`} />
           </button>
 

@@ -29,13 +29,31 @@ export const BiasMetrics: React.FC<BiasMetricsProps> = ({
     <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
         <BarChart2 size={24} />
-        Métricas de Sesgo
+        Selecciona la métrica y la variable para el análisis de sesgos
       </h2>
+      <div className="mb-6 text-gray-700 text-justify">
+        <p className="mb-2">
+          En esta sección puedes analizar una métrica de desempeño del modelo desagregada por una variable protegida. Esto te permitirá identificar posibles disparidades en el funcionamiento del modelo entre distintos grupos.
+        </p>
+        <ul className="list-disc pl-6 mb-2">
+          <li>
+            <b>Métrica:</b> selecciona una métrica de interés (por ejemplo, tasa de falsos negativos, precisión, sensibilidad, etc.). La métrica que elijas debe estar alineada con el objetivo de tu proyecto y con la forma en que se definen las categorías positivas y negativas en tu modelo.
+          </li>
+          <li>
+            <b>Variable protegida:</b> selecciona la variable sobre la que deseas evaluar el sesgo. También puedes elegir "todas las variables" para visualizar el desglose completo.
+          </li>
+        </ul>
+        <p>
+          Puedes repetir este proceso para distintas métricas y variables. La herramienta realiza el análisis una métrica a la vez, pero puedes volver a esta pestaña cuantas veces necesites.
+        </p>
+        <br />
+        <p>Una vez realizada tu selección, haz clic en “Actualizar gráfico” para ver los resultados desagregados.</p>
+      </div>
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Métrica
+              <strong>Métrica</strong>
             </label>
             <select
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
@@ -52,7 +70,7 @@ export const BiasMetrics: React.FC<BiasMetricsProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Variable Protegida
+              <strong>Variable Protegida</strong>
             </label>
             <select
               className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"

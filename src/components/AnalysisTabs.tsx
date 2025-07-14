@@ -32,7 +32,7 @@ export const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
     <div className="w-full">
       <Tab.Group>
         <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-          {['Análisis de Sesgos','Análisis de Disparidad'].map((tab) => (
+          {['Análisis de Sesgos','Análisis de Equidad'].map((tab) => (
             <Tab
               key={tab}
               className={({ selected }) =>

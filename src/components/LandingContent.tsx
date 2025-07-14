@@ -20,22 +20,22 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <img 
-            src="https://algoritmospublicos.cl/static/img/Logo_herramientas_algoritmos.png" 
+            src="https://goblab.uai.cl/wp-content/uploads/2024/11/logo-goblab-uai.png" 
             alt="Logo"
             className="h-16"
           />
           <img 
-            src="https://goblab.uai.cl/wp-content/uploads/2024/11/logo-goblab-uai.png" 
+            src="/images/herramientas.png" 
             alt="Secondary Logo"
             className="h-16"
           />
         </div>
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 text-center">
             Herramienta de medición de sesgos y equidad estadistica
           </h1>
-          <p className="text-sm text-gray-500 mb-2">V.0.0.3 Beta</p>
+          <p className="text-sm text-gray-500 mb-2">V.2.0.0</p>
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
@@ -52,7 +52,7 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
             </p>
 
             <p className="text-gray-700 mb-6">
-              Para más información sobre las fases, consultar la Guía Permitido Innovar: ¿Cómo podemos desarrollar proyectos de ciencia de datos para innovar en el sector público? disponible en https://www.lab.gob.cl/permitido-innovar .
+              Para más información sobre las fases, consultar la Guía Permitido Innovar: ¿Cómo podemos desarrollar proyectos de ciencia de datos para innovar en el sector público? disponible <a href='https://www.lab.gob.cl/permitido-innovar'>aquí</a>.
             </p>
             <p className="text-gray-700 mb-6">Para utilizar la herramienta, es necesario contar con el conjunto de datos en formato .xsls o .csv Como requisito mínimo, este conjunto de datos debe contener una columna para las predicciones que generó el modelo (binario), una columna para los valores reales (binario), y las columnas de las variables protegidas. A partir de esto, se seleccionan las variables protegidas del proyecto y se calcula la matriz de confusión y métricas de medición de sesgos.</p>
             
@@ -106,7 +106,7 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
               </h3>
               <p className="text-gray-600">
                 La información ingresada en esta herramienta no es almacenada por la plataforma. Todos los datos
-                son procesados localmente en tu navegador para garantizar tu privacidad.
+                son procesados y posteriormente eliminados de nuestros servidores.
               </p>
             </div>
           </div>

@@ -7,7 +7,7 @@ import { DataPreview } from './DataPreview';
 import { ColumnSelector } from './ColumnSelector';
 import { Tabs } from './Tabs';
 import { BiasAnalysis } from './BiasAnalysis';
-import { ReferenceGroupAnalysis } from './ReferenceGroupAnalysis';
+//import { ReferenceGroupAnalysis } from './ReferenceGroupAnalysis';
 import { BiasAnalysisTab } from './BiasAnalysisTab';
 import { useAnalysisState } from '../hooks/useAnalysisState';
 import { useFileUpload } from '../hooks/useFileUpload';
@@ -91,7 +91,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             <ArrowLeft className="h-6 w-6 text-gray-600" />
           </button>
           <h1 className="text-3xl font-bold text-gray-900">
-            Análisis de Sesgos y Equidad
+            Carga de datos para el análisis:
           </h1>
         </div>
 
@@ -140,7 +140,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   ),
                 },
                 {
-                  name: 'Análisis de Disparidad',
+                  name: 'Análisis de Equidad',
                   content: (
                     <BiasAnalysisTab
                       protectedColumns={results.protected_attributes || []}
@@ -157,6 +157,22 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
           </div>
         ) : (
           <>
+            <div className="mb-6 text-justify">
+              <p className="text-gray-800 mb-2 font-semibold">
+                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b> que contenga las siguientes columnas:
+              </p>
+              <ul className="list-disc pl-6 mb-2 text-gray-700">
+                <li><b>Predicciones del modelo:</b> los valores generados por el modelo de inteligencia artificial o machine learning que deseas evaluar.</li>
+                <li><b>Valores reales:</b> las etiquetas verdaderas con las que se comparan las predicciones.</li>
+                <li><b>Variables protegidas:</b> atributos demográficos o relevantes para el análisis de sesgos. Por ejemplo: género, edad, situación socioeconómica, entre otros. La Ley N.º 20.609 chilena establece 16 categorías protegidas frente a la discriminación arbitraria (<a href='https://www.bcn.cl/leychile/navegar?i=1042092'>ver ley</a>). Si alguna de estas variables está presente en tus datos, debe ser evaluada para identificar posibles sesgos.</li>
+              </ul>
+              <p className="text-gray-700 mb-2">
+                También pueden usarse variables proxy (sustitutas) que estén razonablemente asociadas a estas categorías. La selección de las variables protegidas debe ser realizada por el equipo responsable del proyecto.
+              </p>
+              <p className="text-gray-700">
+                Asegúrate de que cada columna esté claramente identificada y que no hayan valores faltantes en las variables clave. Cada variable debe ser <b>categorica</b>, por lo que columnas con valores reales no serán procesadas.
+              </p>
+            </div>
             <InfoAlert />
             <FileUpload
               file={file}
@@ -166,8 +182,24 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
 
             {previewData && (
               <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-                <h2 className="text-xl font-semibold mb-4">Configurar Columnas</h2>
-                
+                <h2 className="text-xl font-semibold mb-4">Configura tu dataset para el análisis:</h2>
+
+                <div className="mb-4 text-gray-700">
+                  <p className="mb-2">
+                    Antes de comenzar, es necesario que asocies correctamente cada columna del archivo cargado con su función en el análisis:
+                  </p>
+                  <ul className="list-disc pl-6 mb-2">
+                    <li><b>Columna de Predicciones:</b> selecciona la columna que contiene las predicciones generadas por tu modelo.</li>
+                    <li><b>Columna de Valores Reales:</b> selecciona la columna que contiene las etiquetas reales u observadas.</li>
+                    <li><b>Selecciona solo las variables protegidas: </b><br/>
+                      <span className="ml-2">- En el campo “Selecciona las columnas que quieres analizar”, marca únicamente las variables protegidas que deseas evaluar por sesgos (por ejemplo: género, edad, situación socioeconómica).</span><br/>
+                      <span className="ml-2">- No incluyas columnas de identificadores como ID, entity_id u otras variables que no representen atributos demográficos, ya que pueden interferir con los resultados del análisis.</span>
+                    </li>
+                  </ul>
+                  <p>
+                    Una vez que hayas verificado que la configuración es correcta, haz clic en “Analizar datos” para iniciar el proceso de evaluación de sesgos y equidad.
+                  </p>
+                </div>
                 <DataPreview previewData={previewData} />
                 
                 <ColumnSelector

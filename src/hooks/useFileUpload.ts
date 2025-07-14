@@ -32,7 +32,7 @@ export const useFileUpload = ({
     try {
       const formData = new FormData();
       formData.append('file', file);
-
+      
       const response = await fetch(`${BASE_API_URL}/api/preview`, {
         method: 'POST',
         body: formData,

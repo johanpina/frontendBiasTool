@@ -92,12 +92,7 @@ export const BiasAnalysisTab: React.FC<BiasAnalysisTabProps> = ({
         onAnalyze={handleAnalyze}
       />
 
-      <DisparityPlotControls
-        metrics={metrics_bias}
-        protectedAttributes={protectedColumns}
-        onUpdatePlot={handleUpdatePlot}
-        loading={plotLoading}
-      />
+      
 
       <AnalysisResults
         results={{
@@ -105,6 +100,12 @@ export const BiasAnalysisTab: React.FC<BiasAnalysisTabProps> = ({
           bias_plot: localResults?.bias_plot || results?.bias_plot
         }}
         referenceMethod={referenceMethod}
+      />
+      <DisparityPlotControls
+        metrics={metrics_bias}
+        protectedAttributes={protectedColumns}
+        onUpdatePlot={handleUpdatePlot}
+        loading={plotLoading}
       />
 
       <FairnessSection

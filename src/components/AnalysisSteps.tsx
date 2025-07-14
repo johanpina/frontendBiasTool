@@ -61,7 +61,23 @@ export const AnalysisSteps: React.FC<AnalysisStepsProps> = ({
 
       {step === 'configure' && previewData && (
         <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-          <h2 className="text-xl font-semibold mb-4">Configurar Columnas</h2>
+          <h2 className="text-xl font-semibold mb-4">Configura tu dataset para el análisis</h2>
+          <div className="mb-4 text-gray-700">
+            <p className="mb-2">
+              Antes de comenzar, es necesario que asocies correctamente cada columna del archivo cargado con su función en el análisis:
+            </p>
+            <ul className="list-disc pl-6 mb-2">
+              <li><b>Columna de Predicciones:</b> selecciona la columna que contiene las predicciones generadas por tu modelo.</li>
+              <li><b>Columna de Valores Reales:</b> selecciona la columna que contiene las etiquetas reales u observadas.</li>
+              <li><b>Selecciona solo las variables protegidas: </b><br/>
+                <span className="ml-2">- En el campo “Selecciona las columnas que quieres analizar”, marca únicamente las variables protegidas que deseas evaluar por sesgos (por ejemplo: género, edad, situación socioeconómica).</span><br/>
+                <span className="ml-2">- No incluyas columnas de identificadores como ID, entity_id u otras variables que no representen atributos demográficos, ya que pueden interferir con los resultados del análisis.</span>
+              </li>
+            </ul>
+            <p>
+              Una vez que hayas verificado que la configuración es correcta, haz clic en “Analizar datos” para iniciar el proceso de evaluación de sesgos y equidad.
+            </p>
+          </div>
           
           <DataPreview previewData={previewData} />
           
