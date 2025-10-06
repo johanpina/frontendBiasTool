@@ -84,7 +84,6 @@ export const useAnalysis = ({
   setLoading,
   setError,
   setResults,
-  setPlotData
 }: UseAnalysisProps) => {
   const executeAnalysis = async (params: AnalysisParams) => {
     setLoading(true);
@@ -94,11 +93,10 @@ export const useAnalysis = ({
       const formData = createFormData(params);
       const data = await handleApiRequest(`${BASE_API_URL}/api/${params.endpoint}`, formData);
       
-      if (params.endpoint === 'analyze') {
-        processAnalysisResponse(data, setResults, setPlotData);
-      } else {
-        processBiasResponse(data, params.endpoint, setResults);
-      }
+      // Lógica de procesamiento de respuesta simplificada y corregida
+      console.log('Análisis completado:', data);
+      setResults(data); // Guardar directamente la respuesta completa del backend
+
     } catch (err) {
       console.error('Error en análisis:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -107,39 +105,85 @@ export const useAnalysis = ({
     }
   };
 
-  const handleAnalyze = async (file: File, columnSelection: ColumnSelection) => {
+  const handleAnalyze = async (file: File, columnSelection: ColumnSelection, params: any) => {
     await executeAnalysis({
       file,
       columnSelection,
-      endpoint: 'analyze'
+      endpoint: 'full_analysis',
+      formData: { params }
     });
   };
 
-  const handleBiasAnalysis = async (
-    file: File,
-    columnSelection: ColumnSelection,
-    params: any
-  ) => {
-    const endpoint = params.referenceMethod === 'custom' 
-      ? 'analyze_fairness'
-      : 'analyze_bias';
+  const handleBiasAnalysis = async (file: File, columnSelection: any, params: any) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('columns', JSON.stringify(columnSelection));
+      formData.append('params', JSON.stringify(params));
 
-    await executeAnalysis({
-      file,
-      columnSelection,
-      endpoint,
-      formData: {
-        params: {
-          metric_ref: params.metric_ref || 'fpr',
-          ref_groups: params.referenceGroups || {},
-          reference_method: params.referenceMethod
-        }
+      const response = await fetch(`${BASE_API_URL}/api/full_analysis`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error en el análisis de sesgo');
       }
-    });
+
+      const data = await response.json();
+      setResults(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return {
-    handleAnalyze,
-    handleBiasAnalysis
+  const handleRecalculateFairness = async (currentResults: any, newThreshold: number) => {
+    if (!currentResults?.tables?.bias_metrics) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const payload = {
+        bias_metrics: currentResults.tables.bias_metrics,
+        fairnessThreshold: newThreshold,
+      };
+
+      const response = await fetch(`${BASE_API_URL}/api/recalculate_fairness`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error recalculando la equidad');
+      }
+
+      const updatedTables = await response.json();
+      
+      setResults((prevResults: any) => ({
+        ...prevResults,
+        tables: {
+          ...prevResults.tables,
+          ...updatedTables,
+        },
+        metadata: {
+            ...prevResults.metadata,
+            fairnessThreshold: newThreshold
+        }
+      }));
+
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  return { handleAnalyze, handleBiasAnalysis, handleRecalculateFairness };
 };

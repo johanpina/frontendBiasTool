@@ -67,7 +67,7 @@ export const AnalysisConfiguration: React.FC<AnalysisConfigurationProps> = ({
         onMethodChange={onReferenceMethodChange}
       />
 
-      {referenceMethod === 'minority' && (
+      {referenceMethod === 'best_performance' && (
         <MetricSelector
           metricRef={metricRef}
           onMetricChange={onMetricChange}

@@ -1,27 +1,26 @@
+
 import React from 'react';
-import { BarChart2 } from 'lucide-react';
 
 interface PlotVisualizationProps {
-  plotData: string;
   title: string;
+  plotData: string | null;
 }
 
-export const PlotVisualization: React.FC<PlotVisualizationProps> = ({
-  plotData,
-  title
-}) => {
+export const PlotVisualization: React.FC<PlotVisualizationProps> = ({ title, plotData }) => {
+  if (!plotData) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <h2 className="text-xl font-semibold mb-4">{title}</h2>
+        <p className="text-gray-500">No hay datos para mostrar el gráfico.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm">
-      <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <BarChart2 className="h-5 w-5" />
-        {title}
-      </h3>
-      <div className="relative w-full" style={{ minHeight: "400px" }}>
-        <img
-          src={`data:image/png;base64,${plotData}`}
-          alt="Gráfico de disparidad"
-          className="w-full h-auto"
-        />
+      <h2 className="text-xl font-semibold mb-4">{title}</h2>
+      <div className="flex justify-center">
+        <img src={plotData} alt={title} />
       </div>
     </div>
   );

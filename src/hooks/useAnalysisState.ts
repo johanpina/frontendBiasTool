@@ -15,6 +15,8 @@ export const useAnalysisState = () => {
     actual: '',
     protected: []
   });
+  const [recommendedMetric, setRecommendedMetric] = useState<string>('');
+  const [fairnessThreshold, setFairnessThreshold] = useState<number>(1.25);
 
   return {
     file,
@@ -34,6 +36,10 @@ export const useAnalysisState = () => {
     plotData,
     setPlotData,
     columnSelection,
-    setColumnSelection
+    setColumnSelection,
+    recommendedMetric,
+    setRecommendedMetric,
+    fairnessThreshold,
+    setFairnessThreshold
   };
 };

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 
-type ReferenceMethod = 'custom' | 'majority' | 'minority';
+type ReferenceMethod = 'custom' | 'majority' | 'best_performance';
 
 export const useBiasAnalysis = () => {
-  const [referenceMethod, setReferenceMethod] = useState<ReferenceMethod>('custom');
+  const [referenceMethod, setReferenceMethod] = useState<ReferenceMethod>('majority');
   const [referenceGroups, setReferenceGroups] = useState<Record<string, string>>({});
   const [metricRef, setMetricRef] = useState<string>('fpr');
 
@@ -40,7 +40,7 @@ export const useBiasAnalysis = () => {
     const params = {
       referenceMethod,
       ...(referenceMethod === 'custom' && { referenceGroups }),
-      ...(referenceMethod === 'minority' && { metric_ref: metricRef })
+      ...(referenceMethod === 'best_performance' && { performanceMetric: metricRef })
     };
     return params;
   };

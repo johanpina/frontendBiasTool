@@ -1,33 +1,19 @@
 import React from 'react';
 import { Tab } from '@headlessui/react';
-import { BiasAnalysis } from './BiasAnalysis';
-import { ReferenceGroupAnalysis } from './ReferenceGroupAnalysis';
-import { BiasAnalysisTab } from './BiasAnalysisTab';
-import { metrics } from '../constants';
+import { FairnessAnalysis } from './FairnessAnalysis';
 
 interface AnalysisTabsProps {
   results: any;
-  selectedMetric: string;
-  selectedAttribute: string;
-  plotData: string | null;
   loading: boolean;
   onBiasAnalysis: (params: any) => void;
-  setSelectedMetric: (metric: string) => void;
-  setSelectedAttribute: (attribute: string) => void;
-  onUpdatePlot: (metric: string, attribute: string) => void;
 }
 
 export const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
   results,
-  selectedMetric,
-  selectedAttribute,
-  plotData,
   loading,
   onBiasAnalysis,
-  setSelectedMetric,
-  setSelectedAttribute,
-  onUpdatePlot
 }) => {
+  console.log("LOG: Datos en AnalysisTabs", { results });
   return (
     <div className="w-full">
       <Tab.Group>
@@ -49,28 +35,17 @@ export const AnalysisTabs: React.FC<AnalysisTabsProps> = ({
         </Tab.List>
         <Tab.Panels className="mt-6">
           <Tab.Panel className="rounded-xl bg-white p-3">
-            <BiasAnalysis
-              results={results}
-              metrics={metrics}
-              selectedMetric={selectedMetric}
-              selectedAttribute={selectedAttribute}
-              onMetricChange={setSelectedMetric}
-              onAttributeChange={setSelectedAttribute}
-              plotData={plotData}
-              loading={loading}
-              onUpdatePlot={onUpdatePlot}
-            />
+            {/* BiasAnalysis component can be placed here if needed */}
           </Tab.Panel>
           <Tab.Panel className="rounded-xl bg-white p-3">
-            <BiasAnalysisTab
-              protectedColumns={results.protected_attributes}
-              uniqueValues={results.unique_values}
+            <FairnessAnalysis
+              protectedColumns={results?.metadata?.protected_attributes || []}
+              uniqueValues={results?.metadata?.unique_values || {}}
               onAnalyze={onBiasAnalysis}
               results={results}
               loading={loading}
             />
           </Tab.Panel>
-          
         </Tab.Panels>
       </Tab.Group>
     </div>

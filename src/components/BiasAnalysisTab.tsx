@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useBiasAnalysis } from '../hooks/useBiasAnalysis';
 import { AnalysisConfiguration } from './bias-analysis/AnalysisConfiguration';
-import { AnalysisResults } from './bias-analysis/AnalysisResults';
-import { DisparityPlotControls } from './bias-analysis/DisparityPlotControls';
-import { FairnessSection } from './bias-analysis/FairnessSection';
-import { metrics_bias } from '../constants';
+import { DataTable } from './DataTable';
+import { DisparityPlotter } from './bias-analysis/DisparityPlotter';
+import { AbsolutePlotter } from './bias-analysis/AbsolutePlotter';
+import { METRIC_TRANSLATIONS } from '../constants';
 
 interface BiasAnalysisTabProps {
   protectedColumns: string[];
@@ -21,11 +22,8 @@ export const BiasAnalysisTab: React.FC<BiasAnalysisTabProps> = ({
   onAnalyze,
   results,
   loading,
-  BASE_API_URL
+  BASE_API_URL,
 }) => {
-  const [plotLoading, setPlotLoading] = useState(false);
-  const [localResults, setLocalResults] = useState(results);
-  
   const {
     referenceMethod,
     referenceGroups,
@@ -41,38 +39,6 @@ export const BiasAnalysisTab: React.FC<BiasAnalysisTabProps> = ({
   const handleAnalyze = () => {
     const params = prepareAnalysisParams();
     onAnalyze(params);
-  };
-
-  const handleUpdatePlot = async (selectedMetrics: string[], selectedAttributes: string[]) => {    
-    setPlotLoading(true);
-    try {
-      const response = await fetch(`${BASE_API_URL}/api/bias_plot`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          metrics: selectedMetrics,
-          attributes: selectedAttributes
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error al actualizar la gráfica: ${errorText}`);
-      }
-
-      const data = await response.json();
-      
-      setLocalResults(prev => ({
-        ...prev,
-        bias_plot: data.plot
-      }));
-    } catch (err) {
-      console.error('Error al actualizar el gráfico:', err);
-    } finally {
-      setPlotLoading(false);
-    }
   };
 
   return (
@@ -92,27 +58,27 @@ export const BiasAnalysisTab: React.FC<BiasAnalysisTabProps> = ({
         onAnalyze={handleAnalyze}
       />
 
-      
-
-      <AnalysisResults
-        results={{
-          ...results,
-          bias_plot: localResults?.bias_plot || results?.bias_plot
-        }}
-        referenceMethod={referenceMethod}
-      />
-      <DisparityPlotControls
-        metrics={metrics_bias}
-        protectedAttributes={protectedColumns}
-        onUpdatePlot={handleUpdatePlot}
-        loading={plotLoading}
-      />
-
-      <FairnessSection
-        protectedColumns={protectedColumns}
-        uniqueValues={uniqueValues}
-        results={results}
-      />
+      {results && (
+        <div className="space-y-8 mt-8">
+          <DataTable
+            title="Resumen de Equidad por Atributo"
+            data={results.tables.fairness_summary}
+            translateHeader={(h) => METRIC_TRANSLATIONS[h] || h}
+            formatNumber={(v) => String(v)}
+          />
+          <DisparityPlotter 
+            biasMetrics={results.tables.bias_metrics}
+            protectedAttributes={results.metadata.protected_attributes}
+            fairnessThreshold={results.metadata.fairness_threshold || 1.25}
+            BASE_API_URL={BASE_API_URL}
+          />
+          <AbsolutePlotter 
+            groupMetrics={results.tables.group_metrics_for_plotting}
+            protectedAttributes={results.metadata.protected_attributes}
+            BASE_API_URL={BASE_API_URL}
+          />
+        </div>
+      )}
     </div>
   );
 };

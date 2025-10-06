@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { FileUpload } from './FileUpload';
@@ -6,13 +7,12 @@ import { ErrorAlert } from './ErrorAlert';
 import { DataPreview } from './DataPreview';
 import { ColumnSelector } from './ColumnSelector';
 import { Tabs } from './Tabs';
-import { BiasAnalysis } from './BiasAnalysis';
-//import { ReferenceGroupAnalysis } from './ReferenceGroupAnalysis';
-import { BiasAnalysisTab } from './BiasAnalysisTab';
+import { AnalysisConfiguration } from './AnalysisConfiguration';
 import { useAnalysisState } from '../hooks/useAnalysisState';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { useAnalysis } from '../hooks/useAnalysis';
-import { metrics } from '../constants';
+import { SesgosTabContent } from './SesgosTabContent';
+import { EquidadTabContent } from './EquidadTabContent';
 
 interface ToolViewProps {
   onBack: () => void;
@@ -29,19 +29,15 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     error,
     previewData,
     results,
-    selectedMetric,
-    selectedAttribute,
-    plotData,
     columnSelection,
+    fairnessThreshold,
     setFile,
     setLoading,
     setError,
     setPreviewData,
     setResults,
-    setSelectedMetric,
-    setSelectedAttribute,
-    setPlotData,
-    setColumnSelection
+    setColumnSelection,
+    setFairnessThreshold
   } = useAnalysisState();
 
   const { handleFileUpload: onFileUpload } = useFileUpload({
@@ -52,13 +48,19 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     BASE_API_URL
   });
 
-  const { handleAnalyze, handleBiasAnalysis } = useAnalysis({
+  const { handleAnalyze, handleBiasAnalysis, handleRecalculateFairness } = useAnalysis({
     BASE_API_URL,
     setLoading,
     setError,
     setResults,
-    setPlotData
   });
+
+  const handleThresholdChange = (newValue: number) => {
+    setFairnessThreshold(newValue);
+    if (results) {
+      handleRecalculateFairness(results, newValue);
+    }
+  };
 
   const onAnalyze = async () => {
     if (!file || !columnSelection.predictions || !columnSelection.actual) {
@@ -71,13 +73,14 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
       return;
     }
 
-    await handleAnalyze(file, columnSelection);
+    await handleAnalyze(file, columnSelection, { fairnessThreshold });
     setShowAnalysis(true);
   };
 
   const onBiasAnalysis = async (params: any) => {
     if (!file) return;
-    await handleBiasAnalysis(file, columnSelection, params);
+    const fullParams = { ...params, fairnessThreshold };
+    await handleBiasAnalysis(file, columnSelection, fullParams);
   };
 
   return (
@@ -91,7 +94,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             <ArrowLeft className="h-6 w-6 text-gray-600" />
           </button>
           <h1 className="text-3xl font-bold text-gray-900">
-            Carga de datos para el análisis:
+            Herramienta de Análisis de Sesgo y Equidad
           </h1>
         </div>
 
@@ -110,44 +113,19 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                 {
                   name: 'Análisis de Sesgos',
                   content: (
-                    <BiasAnalysis
+                    <SesgosTabContent
                       results={results}
-                      metrics={metrics}
-                      selectedMetric={selectedMetric}
-                      selectedAttribute={selectedAttribute}
-                      onMetricChange={setSelectedMetric}
-                      onAttributeChange={setSelectedAttribute}
-                      plotData={plotData}
-                      loading={loading}
-                      onUpdatePlot={async (metric: string, attribute: string) => {
-                        if (!file) return;
-                        setLoading(true);
-                        try {
-                          const response = await fetch(
-                            `${BASE_API_URL}/api/plot/${metric}?attribute=${attribute}`,
-                            { method: 'GET' }
-                          );
-                          if (!response.ok) throw new Error('Error al obtener la gráfica');
-                          const data = await response.json();
-                          setPlotData(data.plot);
-                        } catch (err) {
-                          setError(err instanceof Error ? err.message : 'Error al cargar la gráfica');
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
+                      BASE_API_URL={BASE_API_URL}
                     />
                   ),
                 },
                 {
                   name: 'Análisis de Equidad',
                   content: (
-                    <BiasAnalysisTab
-                      protectedColumns={results.protected_attributes || []}
-                      uniqueValues={results.unique_values || {}}
-                      onAnalyze={onBiasAnalysis}
+                    <EquidadTabContent
                       results={results}
                       loading={loading}
+                      onAnalyze={onBiasAnalysis}
                       BASE_API_URL={BASE_API_URL}
                     />
                   ),
@@ -159,18 +137,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
           <>
             <div className="mb-6 text-justify">
               <p className="text-gray-800 mb-2 font-semibold">
-                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b> que contenga las siguientes columnas:
-              </p>
-              <ul className="list-disc pl-6 mb-2 text-gray-700">
-                <li><b>Predicciones del modelo:</b> los valores generados por el modelo de inteligencia artificial o machine learning que deseas evaluar.</li>
-                <li><b>Valores reales:</b> las etiquetas verdaderas con las que se comparan las predicciones.</li>
-                <li><b>Variables protegidas:</b> atributos demográficos o relevantes para el análisis de sesgos. Por ejemplo: género, edad, situación socioeconómica, entre otros. La Ley N.º 20.609 chilena establece 16 categorías protegidas frente a la discriminación arbitraria (<a href='https://www.bcn.cl/leychile/navegar?i=1042092'>ver ley</a>). Si alguna de estas variables está presente en tus datos, debe ser evaluada para identificar posibles sesgos.</li>
-              </ul>
-              <p className="text-gray-700 mb-2">
-                También pueden usarse variables proxy (sustitutas) que estén razonablemente asociadas a estas categorías. La selección de las variables protegidas debe ser realizada por el equipo responsable del proyecto.
-              </p>
-              <p className="text-gray-700">
-                Asegúrate de que cada columna esté claramente identificada y que no hayan valores faltantes en las variables clave. Cada variable debe ser <b>categorica</b>, por lo que columnas con valores reales no serán procesadas.
+                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b>.
               </p>
             </div>
             <InfoAlert />
@@ -181,28 +148,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             />
 
             {previewData && (
-              <div className="bg-white p-6 rounded-lg shadow-sm mb-8">
-                <h2 className="text-xl font-semibold mb-4">Configura tu dataset para el análisis:</h2>
-
-                <div className="mb-4 text-gray-700">
-                  <p className="mb-2">
-                    Antes de comenzar, es necesario que asocies correctamente cada columna del archivo cargado con su función en el análisis:
-                  </p>
-                  <ul className="list-disc pl-6 mb-2">
-                    <li><b>Columna de Predicciones:</b> selecciona la columna que contiene las predicciones generadas por tu modelo.</li>
-                    <li><b>Columna de Valores Reales:</b> selecciona la columna que contiene las etiquetas reales u observadas.</li>
-                    <li><b>Selecciona solo las variables protegidas: </b><br/>
-                      <span className="ml-2">- En el campo “Selecciona las columnas que quieres analizar”, marca únicamente las variables protegidas que deseas evaluar por sesgos (por ejemplo: género, edad, situación socioeconómica).</span><br/>
-                      <span className="ml-2">- No incluyas columnas de identificadores como ID, entity_id u otras variables que no representen atributos demográficos, ya que pueden interferir con los resultados del análisis.</span>
-                    </li>
-                  </ul>
-                  <p>
-                    Una vez que hayas verificado que la configuración es correcta, haz clic en “Analizar datos” para iniciar el proceso de evaluación de sesgos y equidad.
-                  </p>
-                </div>
-                <DataPreview previewData={previewData} />
-                
-                <ColumnSelector
+              <>
+                <AnalysisConfiguration
                   columnSelection={columnSelection}
                   previewData={previewData}
                   onColumnSelectionChange={(field, value) => 
@@ -236,16 +183,19 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                         !columnSelection.protected.includes(col)
                     )
                   }
+                  onWizardComplete={() => {}} // Placeholder
+                  fairnessThreshold={fairnessThreshold}
+                  onThresholdChange={handleThresholdChange}
                 />
 
                 <button
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                  className="w-full bg-indigo-600 text-white px-4 py-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-lg font-semibold"
                   onClick={onAnalyze}
                   disabled={loading}
                 >
                   {loading ? 'Analizando...' : 'Analizar Datos'}
                 </button>
-              </div>
+              </>
             )}
 
             {error && <ErrorAlert message={error} />}

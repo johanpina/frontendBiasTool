@@ -5,7 +5,7 @@ import { RadioGroup } from '@headlessui/react';
 export const referenceMethodOptions = [
   { id: 'custom', name: 'Personalizado', description: 'Seleccionar manualmente los grupos de referencia' },
   { id: 'majority', name: 'Grupo Mayoritario', description: 'Usar el grupo con mayor cantidad de instancias como referencia' },
-  { id: 'minority', name: 'Grupo Minoritario', description: 'Usar el grupo con menor cantidad de instancias como referencia' }
+  { id: 'best_performance', name: 'Grupo con Mejor Desempeño', description: 'Usar el grupo con el menor error como referencia' }
 ];
 
 interface ReferenceMethodSelectorProps {

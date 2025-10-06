@@ -6,6 +6,8 @@ interface DataTableProps {
   data: any[];
   translateHeader: (header: string) => string;
   formatNumber: (value: number) => string;
+  highlightRowKey?: string;
+  highlightRowValue?: string;
 }
 
 export const DataTable: React.FC<DataTableProps> = ({
@@ -13,6 +15,8 @@ export const DataTable: React.FC<DataTableProps> = ({
   data,
   translateHeader,
   formatNumber,
+  highlightRowKey,
+  highlightRowValue,
 }) => {
   // Early return if data is invalid
   if (!data || !Array.isArray(data) || data.length === 0 || !data[0]) {
@@ -74,20 +78,23 @@ export const DataTable: React.FC<DataTableProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((row, index) => (
-              <tr key={index}>
-                {Object.values(row).map((value: any, i: number) => (
-                  <td
-                    key={i}
-                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
-                  >
-                    <div className="flex items-center">
-                      {formatValue(value)}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {data.map((row, index) => {
+              const isHighlighted = highlightRowKey && highlightRowValue && row[highlightRowValue] === highlightRowKey;
+              return (
+                <tr key={index} className={`${isHighlighted ? 'bg-yellow-100' : ''}`}>
+                  {Object.values(row).map((value: any, i: number) => (
+                    <td
+                      key={i}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                    >
+                      <div className="flex items-center">
+                        {formatValue(value)}
+                      </div>
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

@@ -24,7 +24,7 @@ export const DataPreview: React.FC<DataPreviewProps> = ({ previewData }) => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {previewData.rows.slice(0, 5).map((row, idx) => (
+            {previewData.preview && previewData.preview.slice(0, 5).map((row, idx) => (
               <tr key={idx}>
                 {previewData.columns.map((column) => (
                   <td
