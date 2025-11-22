@@ -137,7 +137,18 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
           <>
             <div className="mb-6 text-justify">
               <p className="text-gray-800 mb-2 font-semibold">
-                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b>.
+                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b> que contenga las siguientes columnas:
+              </p>
+              <ul className="list-disc pl-6 mb-2 text-gray-700">
+                <li><b>Predicciones del modelo:</b> los valores generados por el modelo de inteligencia artificial o machine learning que deseas evaluar.</li>
+                <li><b>Valores reales:</b> las etiquetas verdaderas con las que se comparan las predicciones.</li>
+                <li><b>Variables protegidas:</b> atributos demográficos o relevantes para el análisis de sesgos. Por ejemplo: género, edad, situación socioeconómica, entre otros. La Ley N.º 20.609 chilena establece 16 categorías protegidas frente a la discriminación arbitraria (<a href='https://www.bcn.cl/leychile/navegar?i=1042092'>ver ley</a>). Si alguna de estas variables está presente en tus datos, debe ser evaluada para identificar posibles sesgos.</li>
+              </ul>
+              <p className="text-gray-700 mb-2">
+                También pueden usarse variables proxy (sustitutas) que estén razonablemente asociadas a estas categorías. La selección de las variables protegidas debe ser realizada por el equipo responsable del proyecto.
+              </p>
+              <p className="text-gray-700">
+                Asegúrate de que cada columna esté claramente identificada y que no hayan valores faltantes en las variables clave. Cada variable debe ser <b>categorica</b>, por lo que columnas con valores reales no serán procesadas.
               </p>
             </div>
             <InfoAlert />
@@ -149,6 +160,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
 
             {previewData && (
               <>
+
+                
                 <AnalysisConfiguration
                   columnSelection={columnSelection}
                   previewData={previewData}

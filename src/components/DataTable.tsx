@@ -47,6 +47,17 @@ export const DataTable: React.FC<DataTableProps> = ({
       // Para valores mayores a 1, mostrar 2 decimales
       return value.toFixed(2);
     }
+
+    // Traducir 'fair' y 'unfair'
+    if (typeof value === 'string') {
+      const lowerCaseValue = value.toLowerCase();
+      if (lowerCaseValue === 'fair') {
+        return <span className="text-green-600 font-semibold">Equitativo</span>;
+      }
+      if (lowerCaseValue === 'unfair') {
+        return <span className="text-red-600 font-semibold">No Equitativo</span>;
+      }
+    }
     
     // Para valores nulos o indefinidos
     if (value === null || value === undefined) {

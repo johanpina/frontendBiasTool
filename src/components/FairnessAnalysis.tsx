@@ -1,54 +1,33 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { SlidersHorizontal } from 'lucide-react';
+import { METRIC_TRANSLATIONS } from '../constants';
 
 interface FairnessAnalysisProps {
   protectedColumns: string[];
   uniqueValues: Record<string, string[]>;
-  onAnalyze: (params: any) => void;
   loading: boolean;
-  results: any; 
+  referenceMethod: string;
+  setReferenceMethod: (method: string) => void;
+  customReferenceGroups: Record<string, string>;
+  handleCustomGroupChange: (attribute: string, value: string) => void;
+  performanceMetric: string;
+  setPerformanceMetric: (metric: string) => void;
+  handleAnalysisClick: () => void;
 }
 
 export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
   protectedColumns,
   uniqueValues,
-  onAnalyze,
   loading,
+  referenceMethod,
+  setReferenceMethod,
+  customReferenceGroups,
+  handleCustomGroupChange,
+  performanceMetric,
+  setPerformanceMetric,
+  handleAnalysisClick,
 }) => {
-  const [referenceMethod, setReferenceMethod] = useState('majority');
-  const [customReferenceGroups, setCustomReferenceGroups] = useState<Record<string, string>>({});
-  const [performanceMetric, setPerformanceMetric] = useState('fpr');
-
-  console.log("LOG: Props en FairnessAnalysis", { protectedColumns, uniqueValues });
-  console.log("LOG: Estado de referenceMethod", referenceMethod);
-
-
-  useEffect(() => {
-    if (protectedColumns && protectedColumns.length > 0) {
-      const initialGroups: Record<string, string> = {};
-      protectedColumns.forEach(col => {
-        if (uniqueValues[col] && uniqueValues[col].length > 0) {
-          initialGroups[col] = uniqueValues[col][0];
-        }
-      });
-      setCustomReferenceGroups(initialGroups);
-    }
-  }, [protectedColumns, uniqueValues]);
-
-  const handleCustomGroupChange = (attribute: string, value: string) => {
-    setCustomReferenceGroups(prev => ({ ...prev, [attribute]: value }));
-  };
-
-  const handleAnalysisClick = () => {
-    const params = {
-      referenceMethod,
-      ...(referenceMethod === 'custom' && { referenceGroups: customReferenceGroups }),
-      ...(referenceMethod === 'best_performance' && { performanceMetric }),
-    };
-    onAnalyze(params);
-  };
-
   const performanceMetrics = ['fpr', 'fnr', 'for', 'fdr'];
   const referenceMethodOptions = [
     { id: 'majority', name: 'Grupo Mayoritario', description: 'Usa el subgrupo más grande como referencia.' },
@@ -56,13 +35,12 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
     { id: 'custom', name: 'Personalizado', description: 'Selecciona manualmente cada grupo de referencia.' },
   ];
 
-  // Si no hay resultados del análisis, no mostrar nada o un mensaje.
   if (!protectedColumns || protectedColumns.length === 0) {
     return (
       <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 text-center">
         <p className="text-gray-500">Por favor, realice un análisis en la pestaña 'Análisis de Sesgos' para poder configurar el análisis de equidad.</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -72,10 +50,28 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
           <SlidersHorizontal className="h-6 w-6" />
           Configuración del Análisis de Equidad
         </h2>
-
-        {/* Selector de Método de Referencia */}
+        
         <div className="mb-6">
           <h3 className="text-lg font-medium mb-2">Método de selección de subgrupo de referencia</h3>
+          <p className="mb-2">
+            Para realizar un análisis de equidad, es necesario definir un subgrupo de referencia dentro de cada variable protegida. Este subgrupo servirá como base de comparación: la herramienta evaluará si los demás subgrupos presentan diferencias significativas en desempeño o error respecto a este.
+          </p>
+          <ul className="list-disc pl-6 mb-2">
+            <li className="mb-2">
+              <b>Grupo Mayoritario:</b> Se utiliza el subgrupo con mayor número de instancias en el dataset como referencia.<br/>
+              Este enfoque es útil cuando el grupo dominante representa el estándar de comportamiento más frecuente del modelo, y permite contrastar si los grupos con menor representación están recibiendo un trato desigual.
+            </li>
+            <li>
+              <b>Grupo con Mejor Desempeño:</b> Se utiliza el subgrupo que presenta el menor error (por ejemplo, menor tasa de falsos positivos o falsos negativos) como grupo de referencia.<br/>
+              Este enfoque permite detectar qué grupos están sistemáticamente peor tratados que el grupo con mejor resultado, y es especialmente útil en contextos donde se busca garantizar que todos los grupos alcancen un umbral mínimo de equidad.<br/>
+              Para usar esta opción, también debes seleccionar una métrica de rendimiento (por ejemplo: exactitud, precisión, tasa de falsos negativos). Puedes guiarte por la tabla de métricas de error por subgrupo vista en la sección anterior.
+            </li>
+            <li className="mb-2">
+              <b>Personalizado:</b> Selecciona manualmente el grupo de referencia que consideres relevante para tu proyecto. Esta opción es útil cuando existe una justificación normativa, institucional o contextual para usar un grupo específico como base de comparación.
+            </li>
+          </ul>
+          <br />
+
           <div className="flex flex-col md:flex-row gap-4">
             {referenceMethodOptions.map(method => (
               <div key={method.id} 
@@ -88,7 +84,6 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
           </div>
         </div>
 
-        {/* Controles Condicionales */}
         <div className="mb-6 min-h-[100px]">
           {referenceMethod === 'custom' && (
             <div>
@@ -118,13 +113,12 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
                 onChange={(e) => setPerformanceMetric(e.target.value)}
                 className="max-w-xs w-full border-gray-300 rounded-md shadow-sm"
               >
-                {performanceMetrics.map(metric => <option key={metric} value={metric}>{metric.toUpperCase()}</option>)}
+                {performanceMetrics.map(metric => <option key={metric} value={metric}>{METRIC_TRANSLATIONS[metric] || metric.toUpperCase()}</option>)}
               </select>
             </div>
           )}
         </div>
 
-        {/* Botón de Acción */}
         <div className="flex justify-end">
           <button 
             onClick={handleAnalysisClick}
