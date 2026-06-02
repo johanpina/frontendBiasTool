@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Info } from 'lucide-react';
+import { trackToolStart, registerToolUser } from '../lib/analytics';
 
 interface LandingContentProps {
   onStart: () => void;
@@ -10,7 +11,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Email submitted:', email);
+    if (email.trim()) {
+      registerToolUser(email.trim().toLowerCase());
+    }
+    trackToolStart();
     setEmail('');
     onStart();
   };

@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { trackStepComplete, trackToolComplete, trackToolExport } from '../lib/analytics';
 import { FileUpload } from './FileUpload';
 import { InfoAlert } from './InfoAlert';
 import { ErrorAlert } from './ErrorAlert';
@@ -74,6 +75,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     }
 
     await handleAnalyze(file, columnSelection, { fairnessThreshold });
+    trackStepComplete('configuracion', 0, 2);
+    trackToolComplete();
     setShowAnalysis(true);
   };
 
