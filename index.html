@@ -5,22 +5,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Herramienta de sesgos y equidad</title>
-    <!-- Google Analytics — se activa solo cuando VITE_GA_MEASUREMENT_ID está definido -->
-    <script>
-      (function() {
-        var gaId = '%VITE_GA_MEASUREMENT_ID%';
-        if (!gaId || gaId === '%VITE_GA_MEASUREMENT_ID%') return;
-        var s = document.createElement('script');
-        s.async = true;
-        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + gaId;
-        document.head.appendChild(s);
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', gaId, { send_page_view: true });
-        window.gtag = gtag;
-      })();
-    </script>
+    <!-- Google Analytics se inicializa desde src/lib/analytics.ts (initGA) -->
   </head>
   <body>
     <div id="root"></div>
