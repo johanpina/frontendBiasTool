@@ -28,6 +28,8 @@ export const metrics_bias = [
 ];
 
 export const METRIC_TRANSLATIONS: { [key: string]: string } = {
+    'class': 'Clase',
+    'insufficient_sample': 'Muestra insuficiente',
     'model_id': 'ID del Modelo',
     'score_threshold': 'Umbral de Puntuación',
     'k': 'Valor K',

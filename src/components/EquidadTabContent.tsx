@@ -217,9 +217,19 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
               data={results.tables.bias_metrics.map((row: any) => {
 
-                const { score_threshold, insufficient_sample, ...rest } = row;
+                const out: any = {};
 
-                return rest;
+                Object.keys(row).forEach((k) => {
+
+                  if (['score_threshold', 'insufficient_sample', 'model_id', 'k'].includes(k)) return;
+
+                  if (k.endsWith('_significance') || k.endsWith('_ref_group_value')) return;
+
+                  out[k] = row[k];
+
+                });
+
+                return out;
 
               })}
 

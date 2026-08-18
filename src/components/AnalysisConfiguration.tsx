@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ColumnSelector } from './ColumnSelector';
-import { FairnessWizard } from './FairnessWizard';
+import { MetricSelectorTree } from './MetricSelectorTree';
 import { DataPreview } from './DataPreview';
 
 interface AnalysisConfigurationProps {
@@ -57,11 +57,13 @@ export const AnalysisConfiguration: React.FC<AnalysisConfigurationProps> = ({
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Paso 2: Define tu Contexto de Equidad (Opcional)</h2>
+        <h2 className="text-xl font-semibold mb-1">Paso 2: ¿Qué métrica debo mirar? (Opcional)</h2>
         <p className="text-gray-700 mb-4">
-          Responde estas preguntas para que podamos recomendarte la métrica de equidad más relevante para tu caso de uso, basado en el árbol de decisión de Aequitas.
+          No todas las métricas importan por igual: depende de qué hace tu modelo. Responde estas preguntas y te
+          diremos, en palabras simples, <b>en qué métrica enfocarte</b> y por qué. Está basado en el
+          <b> árbol de decisión de Aequitas</b>.
         </p>
-        <FairnessWizard onComplete={onWizardComplete} />
+        <MetricSelectorTree onComplete={onWizardComplete} />
       </div>
 
       <div>

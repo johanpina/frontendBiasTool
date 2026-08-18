@@ -94,8 +94,9 @@ export interface SatisfactionPayload {
 
 /**
  * Registra una respuesta de la encuesta de satisfacción en Supabase.
- * Requiere una tabla `tool_feedback` con columnas:
- *   satisfaction int, ease int, usefulness int, comment text, email text, tool_name text
+ * Usa la tabla compartida `tool_feedback` (mismo esquema que las demás
+ * herramientas del GobLab): la encuesta se guarda como texto en `description`
+ * con feedback_type "Comentario general" y pantalla "encuesta".
  * Falla en silencio para no bloquear el flujo del usuario.
  */
 export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Promise<boolean> {
@@ -106,6 +107,15 @@ export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Pr
     usefulness: payload.usefulness,
   });
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+
+  const description = [
+    "ENCUESTA DE SATISFACCIÓN",
+    `Satisfacción general: ${payload.satisfaction}/5`,
+    `Facilidad de uso: ${payload.ease}/5`,
+    `Utilidad para el análisis: ${payload.usefulness}/5`,
+    `Comentario: ${payload.comment?.trim() || "-"}`,
+  ].join("\n");
+
   try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/tool_feedback`, {
       method: "POST",
@@ -116,12 +126,11 @@ export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Pr
         "Prefer": "return=minimal",
       },
       body: JSON.stringify({
-        satisfaction: payload.satisfaction,
-        ease: payload.ease,
-        usefulness: payload.usefulness,
-        comment: payload.comment || null,
+        tool: TOOL_NAME,
+        feedback_type: "Comentario general",
+        description,
         email: payload.email || null,
-        tool_name: TOOL_NAME,
+        pantalla: "encuesta",
       }),
     });
     return res.ok;
