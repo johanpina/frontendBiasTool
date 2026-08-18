@@ -65,22 +65,28 @@ export const AnalysisConfiguration: React.FC<AnalysisConfigurationProps> = ({
       </div>
 
       <div>
-        <h2 class="text-xl font-semibold mb-4">Paso 3: Define el Porcentaje de Tolerancia de Disparidad</h2>
-        <p class="text-gray-700 mb-4">
-          Define el porcentaje máximo de disparidad aceptable entre un grupo y el grupo de referencia. Por ejemplo, un 25% de tolerancia significa que la métrica de un grupo puede ser hasta un 25% diferente a la del grupo de referencia antes de considerarse injusta. Como ejemplo práctico, si la tasa de aprobación del grupo de referencia es del 50%, con una tolerancia del 20%, se aceptarían tasas de aprobación de hasta el 60% (50% * 1.20) para otros grupos.
+        <h2 className="text-xl font-semibold mb-4">Paso 3: Define la Tolerancia de Disparidad</h2>
+        <p className="text-gray-700 mb-2">
+          La tolerancia define cuánta <b>disparidad</b> se acepta entre un subgrupo y el grupo de referencia
+          antes de considerarlo inequitativo. Se expresa como un <b>multiplicador</b>: por ejemplo <b>1.25×</b>
+          (la clásica "regla del 80%") tolera hasta un 25% de diferencia.
         </p>
-        <div class="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+        <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
           <input
             type="range"
-            min="0"
-            max="100"
-            step="1"
-            value={(fairnessThreshold - 1) * 100}
-            onChange={(e) => onThresholdChange(parseFloat(e.target.value) / 100 + 1)}
-            class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+            min="1"
+            max="3"
+            step="0.05"
+            value={fairnessThreshold}
+            onChange={(e) => onThresholdChange(parseFloat(e.target.value))}
+            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
-          <span class="font-mono text-lg text-indigo-600">{`${((fairnessThreshold - 1) * 100).toFixed(0)}%`}</span>
+          <span className="font-mono text-lg text-indigo-600 whitespace-nowrap">{fairnessThreshold.toFixed(2)}×</span>
         </div>
+        <p className="text-sm text-gray-600 mt-2">
+          Equitativo si la disparidad está entre <b>{(1 / fairnessThreshold).toFixed(2)}</b> y{' '}
+          <b>{fairnessThreshold.toFixed(2)}</b> (1.00 = sin disparidad).
+        </p>
       </div>
     </div>
   );

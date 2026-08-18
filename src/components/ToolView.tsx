@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { trackStepComplete, trackToolComplete, trackToolExport } from '../lib/analytics';
 import { FileUpload } from './FileUpload';
@@ -12,6 +12,8 @@ import { AnalysisConfiguration } from './AnalysisConfiguration';
 import { useAnalysisState } from '../hooks/useAnalysisState';
 import { useFileUpload } from '../hooks/useFileUpload';
 import { useAnalysis } from '../hooks/useAnalysis';
+import { useEda } from '../hooks/useEda';
+import { EdaPanel } from './eda/EdaPanel';
 import { SesgosTabContent } from './SesgosTabContent';
 import { EquidadTabContent } from './EquidadTabContent';
 
@@ -23,6 +25,7 @@ const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
 
 export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   const [showAnalysis, setShowAnalysis] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   
   const {
     file,
@@ -48,6 +51,17 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     setPreviewData,
     BASE_API_URL
   });
+
+  const { eda, edaLoading, edaError, runEda } = useEda({ BASE_API_URL });
+
+  // Al cargar el CSV: preview (para la config) + análisis exploratorio en paralelo.
+  const handleFileUploadWithEda = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    onFileUpload(event);
+    if (file && file.name.toLowerCase().endsWith('.csv')) {
+      runEda(file);
+    }
+  };
 
   const { handleAnalyze, handleBiasAnalysis, handleRecalculateFairness } = useAnalysis({
     BASE_API_URL,
@@ -82,9 +96,34 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
 
   const onBiasAnalysis = async (params: any) => {
     if (!file) return;
-    const fullParams = { ...params, fairnessThreshold };
+    // El slider de la pestaña de Equidad envía el umbral en `fairness_threshold`;
+    // lo usamos como fuente de verdad para que la tolerancia realmente se aplique.
+    const threshold = params.fairness_threshold ?? fairnessThreshold;
+    setFairnessThreshold(threshold);
+    const fullParams = { ...params, fairnessThreshold: threshold };
     await handleBiasAnalysis(file, columnSelection, fullParams);
   };
+
+  // --- Multiclase: selección de clase (one-vs-rest) ---
+  const isMulticlass = results?.metadata?.task_type === 'multiclass';
+  const classes: string[] = results?.metadata?.classes || [];
+  const activeClass = isMulticlass
+    ? (selectedClass && classes.includes(selectedClass) ? selectedClass : classes[0])
+    : null;
+
+  // Para multiclase, presentamos al resto de la app las tablas/plots de la clase
+  // seleccionada (forma binaria), de modo que las pestañas no cambian.
+  const effectiveResults = useMemo(() => {
+    if (!results || !isMulticlass || !activeClass) return results;
+    const bc = results.by_class?.[activeClass];
+    if (!bc) return results;
+    return {
+      ...results,
+      tables: bc.tables,
+      plots: bc.plots,
+      metadata: { ...results.metadata, selected_class: activeClass },
+    };
+  }, [results, isMulticlass, activeClass]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
@@ -111,13 +150,54 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               Volver a la configuración
             </button>
 
+            {isMulticlass && (
+              <div className="mb-6 bg-white p-5 rounded-lg shadow-sm border border-indigo-200">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className="font-semibold text-gray-800 whitespace-nowrap">
+                    Clase a analizar (uno-contra-el-resto):
+                  </label>
+                  <select
+                    value={activeClass ?? ''}
+                    onChange={(e) => setSelectedClass(e.target.value)}
+                    className="bg-white border border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  >
+                    {classes.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Modelo <b>multiclase</b> ({classes.length} clases): cada clase se evalúa frente al resto.
+                  Las tablas y gráficos muestran la clase <b>{activeClass}</b>.
+                </p>
+                {Array.isArray(results?.fairness_overall) && results.fairness_overall.length > 0 && (
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-semibold text-gray-800">Resumen global (inequidad en alguna clase):</span>
+                    {results.fairness_overall.map((row: any, i: number) => {
+                      const attr = row['Atributo'] ?? row['attribute_name'];
+                      const verdict = row['Conclusión Equidad'] ?? row['fairness_conclusion'];
+                      const unfair = verdict === 'Unfair' || verdict === 'No Equitativo';
+                      return (
+                        <span
+                          key={i}
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${unfair ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
+                        >
+                          {attr}: {unfair ? 'No Equitativo' : 'Equitativo'}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
             <Tabs
               tabs={[
                 {
                   name: 'Análisis de Sesgos',
                   content: (
                     <SesgosTabContent
-                      results={results}
+                      results={effectiveResults}
                       BASE_API_URL={BASE_API_URL}
                     />
                   ),
@@ -126,7 +206,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   name: 'Análisis de Equidad',
                   content: (
                     <EquidadTabContent
-                      results={results}
+                      results={effectiveResults}
                       loading={loading}
                       onAnalyze={onBiasAnalysis}
                       BASE_API_URL={BASE_API_URL}
@@ -158,13 +238,26 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             <FileUpload
               file={file}
               loading={loading}
-              onFileUpload={onFileUpload}
+              onFileUpload={handleFileUploadWithEda}
             />
+
+            {(edaLoading || eda || edaError) && (
+              <div className="mt-8">
+                <EdaPanel eda={eda} loading={edaLoading} error={edaError} />
+              </div>
+            )}
 
             {previewData && (
               <>
+                {eda && (
+                  <div className="mt-10 mb-2 border-t border-gray-200 pt-8">
+                    <h2 className="text-2xl font-bold text-gray-900">Configuración del análisis</h2>
+                    <p className="text-gray-600">
+                      Con el panorama de tus datos claro, selecciona las columnas y la tolerancia para medir la equidad.
+                    </p>
+                  </div>
+                )}
 
-                
                 <AnalysisConfiguration
                   columnSelection={columnSelection}
                   previewData={previewData}

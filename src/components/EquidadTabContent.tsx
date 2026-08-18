@@ -123,7 +123,43 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
   };
 
-  
+  // --- Diagnóstico de transparencia: qué subgrupos explican cada veredicto ---
+  const minGroupSize = results?.metadata?.min_group_size ?? 50;
+  const tau = results?.metadata?.fairness_threshold ?? localThreshold;
+  const ERROR_METRICS: [string, string][] = [
+    ['fpr_disparity', 'FPR'], ['fnr_disparity', 'FNR'],
+    ['for_disparity', 'FOR'], ['fdr_disparity', 'FDR'],
+  ];
+  const buildDiagnostics = () => {
+    const bias = results?.tables?.bias_metrics || [];
+    const lower = 1 / tau, upper = tau;
+    const byAttr: Record<string, { offenders: any[]; insufficient: any[] }> = {};
+    bias.forEach((r: any) => {
+      const a = r.attribute_name;
+      if (!byAttr[a]) byAttr[a] = { offenders: [], insufficient: [] };
+      if (r.insufficient_sample) {
+        byAttr[a].insufficient.push({ group: r.attribute_value, n: r.group_size });
+        return;
+      }
+      if (r.fairness_conclusion === 'Unfair') {
+        let worst: any = null;
+        ERROR_METRICS.forEach(([k, label]) => {
+          const v = r[k];
+          if (v == null || Number.isNaN(v)) return;
+          if (v < lower || v > upper) {
+            const dev = Math.max(v, 1 / v);
+            if (!worst || dev > worst.dev) worst = { label, val: v, dev };
+          }
+        });
+        byAttr[a].offenders.push({ group: r.attribute_value, n: r.group_size, worst });
+      }
+    });
+    return byAttr;
+  };
+  const diagnostics = buildDiagnostics();
+  const hasDiagnostics = Object.values(diagnostics).some(
+    (d) => d.offenders.length > 0 || d.insufficient.length > 0
+  );
 
   return (
 
@@ -171,7 +207,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
           />
 
-          {/* Filtrar la columna 'score_threshold' de los datos */}
+          {/* Filtrar columnas internas de los datos mostrados */}
 
           {results && results.tables && results.tables.bias_metrics && (
 
@@ -181,7 +217,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
               data={results.tables.bias_metrics.map((row: any) => {
 
-                const { score_threshold, ...rest } = row;
+                const { score_threshold, insufficient_sample, ...rest } = row;
 
                 return rest;
 
@@ -229,45 +265,53 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
 
 
-          {/* --- New Slider and Recalculate Button --- */}
+          {/* --- Slider de tolerancia (multiplicador ×) y Recalcular --- */}
 
           <div className="bg-white p-6 rounded-lg shadow-sm my-8 border border-gray-200">
 
-            <h2 className="text-xl font-semibold mb-4">Ajustar Tolerancia y Recalcular</h2>
+            <h2 className="text-xl font-semibold mb-2">Ajustar Tolerancia y Recalcular</h2>
 
             <p className="text-gray-700 mb-4">
 
-              Mueve el slider para ajustar el porcentaje de tolerancia de disparidad y haz clic en "Recalcular" para actualizar las conclusiones de equidad en las tablas.
+              La tolerancia define cuánta <b>disparidad</b> se acepta antes de considerar un subgrupo inequitativo.
+              Un valor de <b>1.25×</b> equivale a la regla del 80%: se tolera hasta un 25% de diferencia respecto al grupo de referencia.
 
             </p>
 
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-4">
+            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-2">
 
               <input
 
                 type="range"
 
-                min="0"
+                min="1"
 
-                max="100"
+                max="3"
 
-                step="1"
+                step="0.05"
 
-                value={(localThreshold - 1) * 100}
+                value={localThreshold}
 
-                onChange={(e) => setLocalThreshold(parseFloat(e.target.value) / 100 + 1)}
+                onChange={(e) => setLocalThreshold(parseFloat(e.target.value))}
 
                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
 
               />
 
-              <span className="font-mono text-lg text-indigo-600">{`${((localThreshold - 1) * 100).toFixed(0)}%`}</span>
+              <span className="font-mono text-lg text-indigo-600 whitespace-nowrap">{localThreshold.toFixed(2)}×</span>
 
             </div>
 
+            <p className="text-sm text-gray-600 mb-4">
+
+              Se considera <b>equitativo</b> si la disparidad del subgrupo está entre{' '}
+              <b>{(1 / localThreshold).toFixed(2)}</b> y <b>{localThreshold.toFixed(2)}</b> (donde 1.00 = sin disparidad).
+
+            </p>
+
             <div className="flex justify-end">
 
-              <button 
+              <button
 
                 onClick={() => handleAnalysisClick()}
 
@@ -298,6 +342,49 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
             formatNumber={(v) => String(v)}
 
           />
+
+          {hasDiagnostics && (
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <h2 className="text-xl font-semibold mb-1">¿Por qué estas conclusiones?</h2>
+              <p className="text-sm text-gray-600 mb-4">
+                Detalle de los subgrupos que determinan cada veredicto, con la tolerancia actual de <b>{tau.toFixed(2)}×</b>.
+                Los subgrupos con menos de <b>{minGroupSize}</b> casos se consideran de <b>muestra insuficiente</b> y no afectan la conclusión.
+              </p>
+              <div className="space-y-4">
+                {Object.entries(diagnostics)
+                  .filter(([, d]) => d.offenders.length > 0 || d.insufficient.length > 0)
+                  .map(([attr, d]) => (
+                  <div key={attr} className="border-l-4 pl-3" style={{ borderColor: d.offenders.length ? '#ef4444' : '#22c55e' }}>
+                    <p className="font-semibold text-gray-800">
+                      {attr}:{' '}
+                      {d.offenders.length ? (
+                        <span className="text-red-600">No Equitativo</span>
+                      ) : (
+                        <span className="text-green-600">Equitativo</span>
+                      )}
+                    </p>
+                    {d.offenders.length > 0 && (
+                      <ul className="list-disc pl-6 text-sm text-gray-700 mt-1">
+                        {d.offenders.map((o: any, i: number) => (
+                          <li key={i}>
+                            <b>{o.group}</b> (n={o.n})
+                            {o.worst && (
+                              <> — mayor disparidad en <b>{o.worst.label}</b> = {o.worst.val.toFixed(2)}×</>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {d.insufficient.length > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        No evaluados por muestra insuficiente: {d.insufficient.map((g: any) => `${g.group} (n=${g.n})`).join(', ')}.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <DataTable
 

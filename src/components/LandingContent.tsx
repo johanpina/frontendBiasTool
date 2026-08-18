@@ -23,10 +23,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="max-w-3xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <img 
-            src="https://goblab.uai.cl/wp-content/uploads/2024/11/logo-goblab-uai.png" 
-            alt="Logo"
-            className="h-16"
+          <img
+            src="/images/goblab-uai.png"
+            alt="GobLab - Universidad Adolfo Ibáñez"
+            className="h-14 w-auto"
           />
           <img 
             src="/images/herramientas.png" 

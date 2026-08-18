@@ -25,4 +25,9 @@ dist-ssr
 .bolt/
 backend/
 .env
+.env.local
+.env.*.local
 dist/*
+# Config local del asistente y lockfile de pnpm (se usa npm)
+.claude/
+pnpm-lock.yaml
