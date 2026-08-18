@@ -1,0 +1,11 @@
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+.dockerignore
+Dockerfile
+.claude
+*.log
+.DS_Store
+pnpm-lock.yaml

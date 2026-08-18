@@ -14,6 +14,9 @@ import { useFileUpload } from '../hooks/useFileUpload';
 import { useAnalysis } from '../hooks/useAnalysis';
 import { useEda } from '../hooks/useEda';
 import { EdaPanel } from './eda/EdaPanel';
+import { IntroGuide } from './IntroGuide';
+import { SatisfactionSurvey } from './SatisfactionSurvey';
+import { Download } from 'lucide-react';
 import { SesgosTabContent } from './SesgosTabContent';
 import { EquidadTabContent } from './EquidadTabContent';
 
@@ -26,6 +29,7 @@ const BASE_API_URL = import.meta.env.VITE_BASE_API_URL;
 export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
   
   const {
     file,
@@ -125,6 +129,18 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     };
   }, [results, isMulticlass, activeClass]);
 
+  const onDownloadPdf = async () => {
+    if (!effectiveResults) return;
+    setPdfLoading(true);
+    try {
+      const { generatePdfReport } = await import('../lib/pdfReport');
+      await generatePdfReport(effectiveResults, BASE_API_URL);
+      trackToolExport('pdf');
+    } finally {
+      setPdfLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-7xl mx-auto">
@@ -215,25 +231,29 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                 },
               ]}
             />
+
+            <div className="mt-10 space-y-6">
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Descarga tu informe</h3>
+                  <p className="text-sm text-gray-600">Genera un PDF con el resumen, las tablas de disparidad y los gráficos de tu análisis.</p>
+                </div>
+                <button
+                  onClick={onDownloadPdf}
+                  disabled={pdfLoading || !effectiveResults}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-gray-300 whitespace-nowrap"
+                >
+                  <Download className="h-5 w-5" />
+                  {pdfLoading ? 'Generando PDF…' : 'Descargar informe PDF'}
+                </button>
+              </div>
+
+              <SatisfactionSurvey />
+            </div>
           </div>
         ) : (
           <>
-            <div className="mb-6 text-justify">
-              <p className="text-gray-800 mb-2 font-semibold">
-                Para iniciar el análisis de sesgos y equidad, carga un archivo en formato <b>.csv</b> que contenga las siguientes columnas:
-              </p>
-              <ul className="list-disc pl-6 mb-2 text-gray-700">
-                <li><b>Predicciones del modelo:</b> los valores generados por el modelo de inteligencia artificial o machine learning que deseas evaluar.</li>
-                <li><b>Valores reales:</b> las etiquetas verdaderas con las que se comparan las predicciones.</li>
-                <li><b>Variables protegidas:</b> atributos demográficos o relevantes para el análisis de sesgos. Por ejemplo: género, edad, situación socioeconómica, entre otros. La Ley N.º 20.609 chilena establece 16 categorías protegidas frente a la discriminación arbitraria (<a href='https://www.bcn.cl/leychile/navegar?i=1042092'>ver ley</a>). Si alguna de estas variables está presente en tus datos, debe ser evaluada para identificar posibles sesgos.</li>
-              </ul>
-              <p className="text-gray-700 mb-2">
-                También pueden usarse variables proxy (sustitutas) que estén razonablemente asociadas a estas categorías. La selección de las variables protegidas debe ser realizada por el equipo responsable del proyecto.
-              </p>
-              <p className="text-gray-700">
-                Asegúrate de que cada columna esté claramente identificada y que no hayan valores faltantes en las variables clave. Cada variable debe ser <b>categorica</b>, por lo que columnas con valores reales no serán procesadas.
-              </p>
-            </div>
+            <IntroGuide />
             <InfoAlert />
             <FileUpload
               file={file}
@@ -302,7 +322,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   onClick={onAnalyze}
                   disabled={loading}
                 >
-                  {loading ? 'Analizando...' : 'Analizar Datos'}
+                  {loading ? 'Analizando...' : 'Analizar Modelo'}
                 </button>
               </>
             )}

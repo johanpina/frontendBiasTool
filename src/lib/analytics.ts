@@ -83,3 +83,49 @@ export async function registerToolUser(email: string) {
     // No bloquear el flujo si el registro falla
   }
 }
+
+export interface SatisfactionPayload {
+  satisfaction: number;   // 1..5 (satisfacción general)
+  ease: number;           // 1..5 (facilidad de uso)
+  usefulness: number;     // 1..5 (utilidad)
+  comment?: string;       // comentario opcional
+  email?: string;         // correo opcional
+}
+
+/**
+ * Registra una respuesta de la encuesta de satisfacción en Supabase.
+ * Requiere una tabla `tool_feedback` con columnas:
+ *   satisfaction int, ease int, usefulness int, comment text, email text, tool_name text
+ * Falla en silencio para no bloquear el flujo del usuario.
+ */
+export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Promise<boolean> {
+  gtag("event", "satisfaction_survey", {
+    tool_name: TOOL_NAME,
+    satisfaction: payload.satisfaction,
+    ease: payload.ease,
+    usefulness: payload.usefulness,
+  });
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tool_feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({
+        satisfaction: payload.satisfaction,
+        ease: payload.ease,
+        usefulness: payload.usefulness,
+        comment: payload.comment || null,
+        email: payload.email || null,
+        tool_name: TOOL_NAME,
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
