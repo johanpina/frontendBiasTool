@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="1000" viewBox="0 0 1300 1000">
+<rect x="0" y="0" width="1300" height="1000" rx="0" fill="#FAF7F4"/>
+<text x="650.0" y="48" font-family="Georgia, 'Times New Roman', serif" font-size="30" fill="#2A2622" font-weight="bold" text-anchor="middle" style="">¿En qué métrica enfocar tu análisis de equidad?</text>
+<text x="650.0" y="78" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#5A534C" font-weight="normal" text-anchor="middle" style="">Guía de decisión en español — inspirada en el árbol de Aequitas</text>
+<rect x="370" y="100" width="560" height="56" rx="12" fill="#2A2622"/>
+<text x="650.0" y="135" font-family="Helvetica, Arial, sans-serif" font-size="18" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">¿Qué te preocupa más de la equidad de tu modelo?</text>
+<line x1="650.0" y1="156" x2="250" y2="205" stroke="#C08A93" stroke-width="2"/>
+<line x1="650.0" y1="156" x2="870" y2="205" stroke="#C08A93" stroke-width="2"/>
+<rect x="30" y="210" width="430" height="760" rx="16" fill="#ffffff" stroke="#E5DFD7" stroke-width="1.5"/>
+<path d="M30,280 L30,226 Q30,210 46,210 L444,210 Q460,210 460,226 L460,280 Z" fill="#F4E4E7"/>
+<text x="245.0" y="242" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#7A3B48" font-weight="bold" text-anchor="middle" letter-spacing="1" style="">LA REPRESENTACIÓN</text>
+<text x="245.0" y="264" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="middle" style="">A cuántas personas elige de cada grupo</text>
+<rect x="60" y="302" width="370" height="52" rx="10" fill="#2A2622"/>
+<text x="245.0" y="333" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">¿Cómo repartir la selección?</text>
+<text x="60" y="382" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#8F877F" font-weight="italic" text-anchor="start" style="">Igual número de cada grupo</text>
+<rect x="60" y="392" width="370" height="104" rx="12" fill="#ffffff" stroke="#C08A93" stroke-width="1.4"/>
+<rect x="76" y="410" width="64" height="32" rx="8" fill="#7A3B48"/>
+<text x="108.0" y="431" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">PPR</text>
+<text x="154" y="422" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Paridad de Selección</text>
+<text x="154" y="442" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">Marca como “positivo” a una proporción</text>
+<text x="154" y="458" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">similar en cada grupo.</text>
+<text x="60" y="532" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#8F877F" font-weight="italic" text-anchor="start" style="">Proporcional al tamaño del grupo</text>
+<rect x="60" y="542" width="370" height="104" rx="12" fill="#ffffff" stroke="#C08A93" stroke-width="1.4"/>
+<rect x="76" y="560" width="64" height="32" rx="8" fill="#7A3B48"/>
+<text x="108.0" y="581" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">PP</text>
+<text x="154" y="572" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Paridad Demográfica</text>
+<text x="154" y="592" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">La selección es proporcional a la</text>
+<text x="154" y="608" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">presencia de cada grupo.</text>
+<rect x="60" y="680" width="370" height="80" rx="10" fill="#FBF3F4" stroke="#E5DFD7" stroke-width="1"/>
+<text x="74" y="706" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#7A3B48" font-weight="bold" text-anchor="start" style="">No mira aciertos ni errores:</text>
+<text x="74" y="726" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5A534C" font-weight="normal" text-anchor="start" style="">solo cuántas personas de cada grupo</text>
+<text x="74" y="742" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5A534C" font-weight="normal" text-anchor="start" style="">selecciona el modelo, sin importar si</text>
+<text x="74" y="758" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5A534C" font-weight="normal" text-anchor="start" style="">acertó.</text>
+<rect x="490" y="210" width="780" height="760" rx="16" fill="#ffffff" stroke="#E5DFD7" stroke-width="1.5"/>
+<path d="M490,280 L490,226 Q490,210 506,210 L1254,210 Q1270,210 1270,226 L1270,280 Z" fill="#F4E4E7"/>
+<text x="880.0" y="242" font-family="Helvetica, Arial, sans-serif" font-size="17" fill="#7A3B48" font-weight="bold" text-anchor="middle" letter-spacing="1" style="">LOS ERRORES DEL MODELO</text>
+<text x="880.0" y="264" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="middle" style="">En qué se equivoca: que falle por igual en todos los grupos</text>
+<rect x="514" y="296" width="732" height="52" rx="10" fill="#FBF4E9" stroke="#EAD8B8" stroke-width="1.2"/>
+<text x="530" y="318" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#A2611F" font-weight="bold" text-anchor="start" style="">⚠  Antes de medir errores:</text>
+<text x="530" y="336" font-family="Helvetica, Arial, sans-serif" font-size="11.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">¿confías en las etiquetas (los valores reales)? Si podrían venir sesgadas, revisa el origen de los datos.</text>
+<rect x="514" y="360" width="732" height="50" rx="10" fill="#2A2622"/>
+<text x="880.0" y="391" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">Cuando el modelo predice “positivo”, ¿qué recibe la persona?</text>
+<rect x="514" y="424" width="356.0" height="46" rx="10" fill="#7A3B48"/>
+<text x="692.0" y="444" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#ffffff" font-weight="bold" text-anchor="middle" letter-spacing="1" style="">PUNITIVO</text>
+<text x="692.0" y="461" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#ffffffcc" font-weight="normal" text-anchor="middle" style="">Perjudica: vigilar, negar, sancionar</text>
+<rect x="890.0" y="424" width="356.0" height="46" rx="10" fill="#2F6B4F"/>
+<text x="1068.0" y="444" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#ffffff" font-weight="bold" text-anchor="middle" letter-spacing="1" style="">ASISTENCIAL</text>
+<text x="1068.0" y="461" font-family="Helvetica, Arial, sans-serif" font-size="11" fill="#ffffffcc" font-weight="normal" text-anchor="middle" style="">Ayuda: apoyo, cupo, admisión</text>
+<text x="692.0" y="494" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#7A3B48" font-weight="bold" text-anchor="middle" style="">Cuida los FALSOS POSITIVOS</text>
+<text x="1068.0" y="494" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#2F6B4F" font-weight="bold" text-anchor="middle" style="">Cuida los FALSOS NEGATIVOS</text>
+<rect x="514" y="508" width="356.0" height="104" rx="12" fill="#ffffff" stroke="#7A3B48" stroke-width="2.4"/>
+<rect x="530" y="526" width="64" height="32" rx="8" fill="#7A3B48"/>
+<text x="562.0" y="547" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">FPR</text>
+<text x="856.0" y="530" font-family="Helvetica, Arial, sans-serif" font-size="9.5" fill="#7A3B48" font-weight="bold" text-anchor="end" letter-spacing="1" style="">PRINCIPAL</text>
+<text x="608" y="538" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Tasa de Falsos Positivos</text>
+<text x="608" y="558" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">Que no señalen por error a quien</text>
+<text x="608" y="574" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">NO correspondía.</text>
+<rect x="514" y="626" width="356.0" height="104" rx="12" fill="#ffffff" stroke="#C08A93" stroke-width="1.4"/>
+<rect x="530" y="644" width="64" height="32" rx="8" fill="#7A3B48"/>
+<text x="562.0" y="665" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">FDR</text>
+<text x="608" y="656" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Tasa de Falsos Descubrimientos</text>
+<text x="608" y="676" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">De a quienes se aplica la medida,</text>
+<text x="608" y="692" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">que pocos estén mal.</text>
+<rect x="890.0" y="508" width="356.0" height="104" rx="12" fill="#ffffff" stroke="#7A3B48" stroke-width="2.4"/>
+<rect x="906.0" y="526" width="64" height="32" rx="8" fill="#2F6B4F"/>
+<text x="938.0" y="547" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">FNR</text>
+<text x="1232.0" y="530" font-family="Helvetica, Arial, sans-serif" font-size="9.5" fill="#7A3B48" font-weight="bold" text-anchor="end" letter-spacing="1" style="">PRINCIPAL</text>
+<text x="984.0" y="538" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Tasa de Falsos Negativos</text>
+<text x="984.0" y="558" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">Que no se le escape la ayuda a</text>
+<text x="984.0" y="574" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">quien SÍ la necesita.</text>
+<rect x="890.0" y="626" width="356.0" height="104" rx="12" fill="#ffffff" stroke="#C08A93" stroke-width="1.4"/>
+<rect x="906.0" y="644" width="64" height="32" rx="8" fill="#2F6B4F"/>
+<text x="938.0" y="665" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">FOR</text>
+<text x="984.0" y="656" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Tasa de Falsas Omisiones</text>
+<text x="984.0" y="676" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">Que “no dar ayuda” sea una</text>
+<text x="984.0" y="692" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">decisión acertada por grupo.</text>
+<rect x="890.0" y="744" width="356.0" height="104" rx="12" fill="#ffffff" stroke="#C08A93" stroke-width="1.4"/>
+<rect x="906.0" y="762" width="64" height="32" rx="8" fill="#2F6B4F"/>
+<text x="938.0" y="783" font-family="Helvetica, Arial, sans-serif" font-size="15" fill="#ffffff" font-weight="bold" text-anchor="middle" style="">TPR</text>
+<text x="984.0" y="774" font-family="Helvetica, Arial, sans-serif" font-size="14.5" fill="#2A2622" font-weight="bold" text-anchor="start" style="">Sensibilidad (Recall)</text>
+<text x="984.0" y="794" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">Si solo ayudas a una fracción:</text>
+<text x="984.0" y="810" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">cubrir a una proporción similar</text>
+<text x="984.0" y="826" font-family="Helvetica, Arial, sans-serif" font-size="12.5" fill="#5A534C" font-weight="normal" text-anchor="start" style="">por grupo.</text>
+<text x="650.0" y="976" font-family="Helvetica, Arial, sans-serif" font-size="12" fill="#5A534C" font-weight="normal" text-anchor="middle" style="">Prioriza la métrica PRINCIPAL de tu contexto y revisa las demás del mismo grupo · Disparidad cercana a 1.00 = trato equitativo · GobLab UAI</text>
+</svg>
