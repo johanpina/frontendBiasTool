@@ -6,6 +6,9 @@ declare global {
 }
 
 const TOOL_NAME = "herramienta de sesgos";
+// La tabla `tool_feedback` exige `email` NOT NULL; usamos este correo genérico
+// cuando la persona no deja el suyo (mismo criterio que la EIA).
+const ANON_EMAIL = "anonimo@goblab.cl";
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
@@ -84,6 +87,48 @@ export async function registerToolUser(email: string) {
   }
 }
 
+export interface FeedbackPayload {
+  type: string;        // "Comentario general" | "Reporte de error"
+  message: string;     // texto del comentario
+  email?: string;      // correo opcional
+  pantalla?: string;   // pantalla desde donde se envía
+}
+
+/**
+ * Registra feedback libre del usuario (botón flotante) en Supabase, usando la
+ * tabla compartida `tool_feedback`. Distinto de la encuesta de satisfacción:
+ * aquí el usuario escribe un comentario o reporta un error en cualquier momento.
+ * Falla en silencio para no interrumpir el flujo.
+ */
+export async function submitFeedback(payload: FeedbackPayload): Promise<boolean> {
+  gtag("event", "feedback_submit", {
+    tool_name: TOOL_NAME,
+    feedback_type: payload.type,
+  });
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tool_feedback`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({
+        tool: TOOL_NAME,
+        feedback_type: payload.type,
+        description: payload.message.trim(),
+        email: payload.email || ANON_EMAIL,
+        pantalla: payload.pantalla || "flotante",
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export interface SatisfactionPayload {
   satisfaction: number;   // 1..5 (satisfacción general)
   ease: number;           // 1..5 (facilidad de uso)
@@ -129,7 +174,7 @@ export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Pr
         tool: TOOL_NAME,
         feedback_type: "Comentario general",
         description,
-        email: payload.email || null,
+        email: payload.email || ANON_EMAIL,
         pantalla: "encuesta",
       }),
     });
