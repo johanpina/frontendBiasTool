@@ -69,34 +69,34 @@ export const DataTable: React.FC<DataTableProps> = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-lg shadow-sm">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <Users size={24} />
+    <div className="bg-white p-6 rounded-2xl shadow-sm border border-rose-light">
+      <h2 className="font-display text-xl font-semibold text-ink mb-4 flex items-center gap-2">
+        <Users size={22} className="text-burgundy" />
         {title}
       </h2>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto rounded-xl border border-line">
+        <table className="min-w-full divide-y divide-line">
+          <thead className="bg-indigo-50">
             <tr>
               {Object.keys(data[0]).map((header) => (
                 <th
                   key={header}
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-[11px] font-semibold text-burgundy uppercase tracking-wider font-mono"
                 >
                   {translateHeader(header)}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white divide-y divide-line">
             {data.map((row, index) => {
               const isHighlighted = highlightRowKey && highlightRowValue && row[highlightRowValue] === highlightRowKey;
               return (
-                <tr key={index} className={`${isHighlighted ? 'bg-yellow-100' : ''}`}>
+                <tr key={index} className={isHighlighted ? 'bg-rose-tint' : 'hover:bg-indigo-50/50 transition-colors'}>
                   {Object.values(row).map((value: any, i: number) => (
                     <td
                       key={i}
-                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                      className="px-6 py-4 whitespace-nowrap text-sm text-ink-80"
                     >
                       <div className="flex items-center">
                         {formatValue(value)}

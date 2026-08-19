@@ -1,9 +1,17 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const INDIGO: [number, number, number] = [79, 70, 229];
-const INK: [number, number, number] = [17, 24, 39];
-const MUTED: [number, number, number] = [107, 114, 128];
+// Paleta "Civic Rose" (misma identidad de la herramienta / EIA).
+const BURGUNDY: [number, number, number] = [122, 59, 72];   // #7A3B48
+const ROSE: [number, number, number] = [192, 138, 147];     // #C08A93
+const ROSE_TINT: [number, number, number] = [244, 228, 231];// #F4E4E7
+const ROSE_PAPER: [number, number, number] = [251, 243, 244];// #FBF3F4
+const PAPER: [number, number, number] = [250, 247, 244];    // #FAF7F4
+const LINE: [number, number, number] = [229, 223, 215];     // #E5DFD7
+const INK: [number, number, number] = [42, 38, 34];         // #2A2622
+const MUTED: [number, number, number] = [90, 83, 76];       // #5A534C
+const SUCCESS: [number, number, number] = [47, 107, 79];    // #2F6B4F
+const DANGER: [number, number, number] = [176, 42, 58];     // rojo civic
 
 async function fetchPlot(url: string, body: unknown): Promise<string | null> {
   try {
@@ -43,13 +51,30 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
   const M = 40;
   let y = M;
 
-  // --- Encabezado ---
-  doc.setFillColor(...INDIGO);
-  doc.rect(0, 0, W, 6, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(...INK);
-  doc.text('Informe de Sesgo y Equidad', M, y + 20); y += 38;
+  // Fondo "paper" de la página actual (se repite en cada página nueva).
+  const paintBg = () => {
+    doc.setFillColor(...PAPER);
+    doc.rect(0, 0, W, H, 'F');
+  };
+  const newPage = () => { doc.addPage(); paintBg(); y = M; };
+
+  paintBg();
+
+  // --- Encabezado (solo primera página) ---
+  doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...ROSE);
+  doc.text('HERRAMIENTAS · ALGORITMOS ÉTICOS', M, y + 4);
+  doc.setFont('times', 'bold'); doc.setFontSize(22); doc.setTextColor(...INK);
+  doc.text('Informe de Sesgo y Equidad', M, y + 26); y += 44;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...MUTED);
   doc.text(`GobLab UAI · Generado el ${new Date().toLocaleString('es-CL')}`, M, y); y += 22;
+
+  // Estilos comunes de tabla (líneas civic).
+  // Nota: no pintamos el fondo en didDrawPage porque ese hook corre DESPUÉS de
+  // dibujar la tabla y la taparía. El fondo se pinta al inicio y en newPage().
+  const tableBase = {
+    styles: { lineColor: LINE, lineWidth: 0.5, textColor: INK as any, font: 'helvetica' },
+    margin: { left: M, right: M },
+  };
 
   // --- Resumen del análisis ---
   const gc0 = tables.group_counts?.[0] || {};
@@ -63,45 +88,49 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
     ['Tipo de modelo', meta.task_type === 'multiclass' ? `Multiclase — clase: ${meta.selected_class ?? ''}` : 'Binario'],
   ];
   autoTable(doc, {
+    ...tableBase,
     startY: y,
     head: [['Parámetro', 'Valor']],
     body: resumen,
     theme: 'grid',
-    headStyles: { fillColor: INDIGO, fontSize: 10 },
-    bodyStyles: { fontSize: 9, textColor: INK },
-    margin: { left: M, right: M },
+    headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+    bodyStyles: { fontSize: 9 },
+    alternateRowStyles: { fillColor: ROSE_PAPER },
   });
-  y = (doc as any).lastAutoTable.finalY + 24;
+  y = (doc as any).lastAutoTable.finalY + 26;
 
   // --- Resumen de Equidad por Atributo ---
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
-  doc.text('Resumen de Equidad por Atributo', M, y); y += 8;
+  if (y > H - 120) newPage();
+  doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
+  doc.text('Resumen de Equidad por Atributo', M, y); y += 10;
   autoTable(doc, {
+    ...tableBase,
     startY: y,
     head: [['Atributo', 'Conclusión']],
     body: summary.map((r) => [r['Atributo'] ?? r.attribute_name, verdict(r['Conclusión Equidad'] ?? r.fairness_conclusion)]),
     theme: 'striped',
-    headStyles: { fillColor: INDIGO, fontSize: 10 },
+    headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
     bodyStyles: { fontSize: 10 },
+    alternateRowStyles: { fillColor: ROSE_PAPER },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 1) {
-        data.cell.styles.textColor = data.cell.raw === 'No Equitativo' ? [208, 59, 59] : [12, 163, 12];
+        data.cell.styles.textColor = data.cell.raw === 'No Equitativo' ? DANGER : SUCCESS;
         data.cell.styles.fontStyle = 'bold';
       }
     },
-    margin: { left: M, right: M },
   });
-  y = (doc as any).lastAutoTable.finalY + 24;
+  y = (doc as any).lastAutoTable.finalY + 26;
 
   // --- Disparidades por subgrupo (por atributo) ---
   const attrs: string[] = meta.protected_attributes || [...new Set(bias.map((r) => r.attribute_name))];
   for (const attr of attrs) {
     const rows = bias.filter((r) => r.attribute_name === attr);
     if (!rows.length) continue;
-    if (y > H - 140) { doc.addPage(); y = M; }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
-    doc.text(`Disparidades — ${attr}`, M, y); y += 6;
+    if (y > H - 140) newPage();
+    doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
+    doc.text(`Disparidades — ${attr}`, M, y); y += 8;
     autoTable(doc, {
+      ...tableBase,
       startY: y,
       head: [['Subgrupo', 'n', 'FPR', 'FNR', 'FOR', 'FDR', 'Conclusión']],
       body: rows.map((r) => [
@@ -111,12 +140,19 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
         verdict(r.fairness_conclusion),
       ]),
       theme: 'grid',
-      headStyles: { fillColor: [55, 65, 81], fontSize: 9 },
-      bodyStyles: { fontSize: 8.5, textColor: INK },
-      margin: { left: M, right: M },
+      headStyles: { fillColor: ROSE, textColor: INK, fontSize: 9, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 8.5 },
+      alternateRowStyles: { fillColor: ROSE_TINT },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 6) {
+          data.cell.styles.textColor = data.cell.raw === 'No Equitativo' ? DANGER : SUCCESS;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
     });
     y = (doc as any).lastAutoTable.finalY + 18;
   }
+  if (y > H - 60) newPage();
   doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
   doc.text('Valores = disparidad respecto al grupo de referencia (1.00 = sin diferencia). * muestra insuficiente (no afecta el veredicto).', M, y);
   y += 20;
@@ -127,25 +163,32 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
     const props = doc.getImageProperties(dataUri);
     const imgW = W - 2 * M;
     const imgH = (props.height / props.width) * imgW;
-    if (y + imgH + 30 > H - M) { doc.addPage(); y = M; }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
-    doc.text(title, M, y); y += 12;
+    if (y + imgH + 30 > H - M) newPage();
+    doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
+    doc.text(title, M, y); y += 14;
     doc.addImage(dataUri, 'PNG', M, y, imgW, imgH); y += imgH + 24;
   };
   if (absPlot || dispPlot) {
-    doc.addPage(); y = M;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
-    doc.text('Gráficos del análisis', M, y); y += 20;
+    newPage();
+    doc.setFont('times', 'bold'); doc.setFontSize(15); doc.setTextColor(...INK);
+    doc.text('Gráficos del análisis', M, y); y += 22;
     addPlot('Valores absolutos — Tasa de Falsos Positivos (FPR)', absPlot);
     addPlot('Disparidad — Tasa de Falsos Positivos (FPR)', dispPlot);
   }
 
-  // Pie de página con numeración.
+  // --- Barra superior de marca + pie de página en TODAS las páginas ---
   const pages = doc.getNumberOfPages();
   for (let i = 1; i <= pages; i++) {
     doc.setPage(i);
+    // Barra burdeos superior.
+    doc.setFillColor(...BURGUNDY);
+    doc.rect(0, 0, W, 5, 'F');
+    // Regla y pie.
+    doc.setDrawColor(...LINE); doc.setLineWidth(0.5);
+    doc.line(M, H - 30, W - M, H - 30);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-    doc.text(`Página ${i} de ${pages}`, W - M, H - 20, { align: 'right' });
+    doc.text('GobLab UAI · Análisis de Sesgos y Equidad', M, H - 18);
+    doc.text(`Página ${i} de ${pages}`, W - M, H - 18, { align: 'right' });
   }
 
   doc.save('informe-sesgo-equidad.pdf');
