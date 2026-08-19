@@ -191,6 +191,8 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
         handleAnalysisClick={() => handleAnalysisClick(results.metadata.fairness_threshold)} // Use original threshold
 
+        biasMetrics={results?.tables?.bias_metrics}
+
       />
 
 

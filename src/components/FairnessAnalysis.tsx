@@ -14,7 +14,10 @@ interface FairnessAnalysisProps {
   performanceMetric: string;
   setPerformanceMetric: (metric: string) => void;
   handleAnalysisClick: () => void;
+  biasMetrics?: any[];
 }
+
+const VERDICT_METRICS = ['fpr', 'fnr', 'for', 'fdr'] as const;
 
 export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
   protectedColumns,
@@ -27,8 +30,42 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
   performanceMetric,
   setPerformanceMetric,
   handleAnalysisClick,
+  biasMetrics,
 }) => {
   const performanceMetrics = ['fpr', 'fnr', 'for', 'fdr'];
+
+  // Previsualiza QUÉ grupo quedará como referencia por atributo, según el método
+  // elegido, replicando la lógica del backend (antes de "Analizar Equidad").
+  const previewRef = (attr: string): { group: string | null; perMetric: Record<string, string> } => {
+    const rows = (biasMetrics || []).filter((r: any) => r.attribute_name === attr);
+    if (!rows.length) return { group: null, perMetric: {} };
+    // Desempate determinista por orden alfabético (igual que el backend).
+    const sorted = [...rows].sort((a: any, b: any) => String(a.attribute_value).localeCompare(String(b.attribute_value)));
+
+    if (referenceMethod === 'custom') {
+      const chosen = customReferenceGroups[attr];
+      if (chosen) return { group: chosen, perMetric: {} };
+      // Si aún no se eligió, el backend cae al grupo mayoritario.
+      const majTmp = sorted.reduce((b: any, r: any) => (Number(r.group_size) > Number(b.group_size) ? r : b));
+      return { group: String(majTmp.attribute_value), perMetric: {} };
+    }
+    if (referenceMethod === 'best_performance') {
+      // El backend elige el mejor grupo por CADA métrica (puede variar).
+      const perMetric: Record<string, string> = {};
+      VERDICT_METRICS.forEach((m) => {
+        const valid = sorted.filter((r: any) => r[m] != null && !Number.isNaN(Number(r[m])));
+        if (valid.length) {
+          const best = valid.reduce((b: any, r: any) => (Number(r[m]) < Number(b[m]) ? r : b));
+          perMetric[m] = String(best.attribute_value);
+        }
+      });
+      const uniq = [...new Set(Object.values(perMetric))];
+      return { group: uniq.length === 1 ? uniq[0] : null, perMetric };
+    }
+    // majority (por defecto): el subgrupo más grande.
+    const best = sorted.reduce((b: any, r: any) => (Number(r.group_size) > Number(b.group_size) ? r : b));
+    return { group: String(best.attribute_value), perMetric: {} };
+  };
   const referenceMethodOptions = [
     { id: 'majority', name: 'Grupo Mayoritario', description: 'Usa el subgrupo más grande como referencia.' },
     { id: 'best_performance', name: 'Grupo con Mejor Desempeño', description: 'Usa el subgrupo con el menor error.' },
@@ -119,8 +156,36 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
           )}
         </div>
 
+        {biasMetrics && biasMetrics.length > 0 && (
+          <div className="mb-6 rounded-xl border border-rose-light bg-indigo-50 p-4">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-burgundy mb-1">Grupo de referencia que se usará</p>
+            <p className="text-xs text-ink-60 mb-3">
+              Vista previa según el método elegido arriba. Se aplicará al pulsar <b>“Analizar Equidad”</b>.
+            </p>
+            <div className="flex flex-wrap gap-2.5">
+              {protectedColumns.map((attr) => {
+                const pv = previewRef(attr);
+                return (
+                  <div key={attr} className="border border-rose-light rounded-lg px-3 py-2 text-sm bg-white">
+                    <div className="flex items-center gap-2">
+                      <span className="text-ink-60">{attr}</span>
+                      <span className="text-ink-20">→</span>
+                      <span className="font-semibold text-burgundy">{pv.group ?? 'varía por métrica'}</span>
+                    </div>
+                    {!pv.group && Object.keys(pv.perMetric).length > 0 && (
+                      <div className="text-[11px] text-ink-60 mt-1 font-mono">
+                        {VERDICT_METRICS.filter((m) => pv.perMetric[m]).map((m) => `${m.toUpperCase()}: ${pv.perMetric[m]}`).join('  ·  ')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         <div className="flex justify-end">
-          <button 
+          <button
             onClick={handleAnalysisClick}
             disabled={loading}
             className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-gray-400"
