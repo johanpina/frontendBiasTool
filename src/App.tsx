@@ -9,7 +9,7 @@ function App() {
   const [showTool, setShowTool] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-paper flex">
       {/* Sidebar */}
       <div 
         className={`fixed inset-y-0 left-0 transform ${

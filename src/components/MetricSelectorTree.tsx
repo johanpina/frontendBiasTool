@@ -7,9 +7,9 @@ import { HelpCircle, RotateCcw, ChevronLeft, Target, ArrowRight } from 'lucide-r
  */
 
 // Paleta del Fairness Tree de Aequitas.
-const AZUL = '#2b5f8a';      // nodos de pregunta
-const TEAL = '#2e7d8c';      // opciones
-const TERRA = '#a8683f';     // resultado (métrica)
+const AZUL = '#2A2622';      // nodos de pregunta (tinta oscura cálida)
+const TEAL = '#C08A93';      // opciones (rosa)
+const TERRA = '#7A3B48';     // resultado (burdeos)
 
 type Node =
   | { type: 'q'; text: string; help?: string; options: { label: string; help?: string; go: string }[] }

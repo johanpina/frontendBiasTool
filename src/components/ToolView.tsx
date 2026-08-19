@@ -142,7 +142,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen bg-paper py-8 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center mb-8">
           <button
