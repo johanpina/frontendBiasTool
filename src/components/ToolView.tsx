@@ -17,7 +17,7 @@ import { EdaPanel } from './eda/EdaPanel';
 import { IntroGuide } from './IntroGuide';
 import { SatisfactionSurvey } from './SatisfactionSurvey';
 import { SectionHeader } from './SectionHeader';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import { SesgosTabContent } from './SesgosTabContent';
 import { EquidadTabContent } from './EquidadTabContent';
 
@@ -31,6 +31,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  // La encuesta de satisfacción solo se muestra al pedir la descarga del PDF.
+  const [showSurvey, setShowSurvey] = useState(false);
   // Métrica recomendada por el árbol (Paso 2), para destacarla en el PDF.
   const [recommendedMetric, setRecommendedMetric] = useState<string | null>(null);
   
@@ -139,6 +141,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
       const { generatePdfReport } = await import('../lib/pdfReport');
       await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric, eda);
       trackToolExport('pdf');
+      // Tras generar el PDF, invitamos a responder la encuesta de satisfacción.
+      setShowSurvey(true);
     } finally {
       setPdfLoading(false);
     }
@@ -269,9 +273,24 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   {pdfLoading ? 'Generando PDF…' : 'Descargar informe PDF'}
                 </button>
               </div>
-
-              <SatisfactionSurvey />
             </div>
+
+            {/* La encuesta de satisfacción aparece solo al descargar el PDF */}
+            {showSurvey && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                <div className="absolute inset-0 bg-black/50" onClick={() => setShowSurvey(false)} aria-hidden />
+                <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                  <button
+                    onClick={() => setShowSurvey(false)}
+                    aria-label="Cerrar"
+                    className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white border border-rose-light transition-colors"
+                  >
+                    <X className="h-5 w-5 text-ink-60" />
+                  </button>
+                  <SatisfactionSurvey />
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <>
