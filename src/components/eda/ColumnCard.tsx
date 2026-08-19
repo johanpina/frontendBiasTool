@@ -3,9 +3,9 @@ import { Hash, List, ToggleLeft } from 'lucide-react';
 import { EdaColumn } from '../../types';
 
 const TYPE_META: Record<string, { label: string; className: string; icon: React.ReactNode }> = {
-  numeric: { label: 'Numérica', className: 'bg-blue-50 text-blue-700', icon: <Hash size={13} /> },
-  categorical: { label: 'Categórica', className: 'bg-violet-50 text-violet-700', icon: <List size={13} /> },
-  binary: { label: 'Binaria', className: 'bg-emerald-50 text-emerald-700', icon: <ToggleLeft size={13} /> },
+  numeric: { label: 'Numérica', className: 'bg-rose-tint text-burgundy', icon: <Hash size={13} /> },
+  categorical: { label: 'Categórica', className: 'bg-[#F6EADB] text-[#A2611F]', icon: <List size={13} /> },
+  binary: { label: 'Binaria', className: 'bg-[#E7F0EA] text-[#2F6B4F]', icon: <ToggleLeft size={13} /> },
 };
 
 interface Props {

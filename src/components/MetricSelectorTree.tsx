@@ -16,7 +16,7 @@ const TEAL = '#C08A93';      // opciones (rosa)
 const TERRA = '#7A3B48';     // resultado (burdeos)
 
 type Node =
-  | { type: 'q'; text: string; help?: string; options: { label: string; help?: string; go: string }[] }
+  | { type: 'q'; text: string; help?: string; options: { label: string; help?: string; ejemplo?: string; go: string }[] }
   | { type: 'metric'; metric: MetricKey }
   | { type: 'info'; title: string; text: string };
 
@@ -99,10 +99,20 @@ const TREE: Record<string, Node> = {
   inicio: {
     type: 'q',
     text: '¿Qué te preocupa más de la equidad de tu modelo?',
-    help: 'La representación mira A CUÁNTAS personas selecciona el modelo; los errores miran EN QUÉ se equivoca.',
+    help: 'Piensa en la diferencia: ¿te importa A CUÁNTAS personas de cada grupo elige el modelo, o EN QUÉ falla con cada grupo?',
     options: [
-      { label: 'La representación entre grupos', help: 'Que el modelo elija una proporción justa de cada grupo.', go: 'rep' },
-      { label: 'Los errores del modelo', help: 'Que el modelo se equivoque por igual entre grupos.', go: 'confia' },
+      {
+        label: '¿A cuántos elige de cada grupo? (representación)',
+        help: 'Te fijas en la proporción de personas que el modelo marca como "sí" en cada grupo, sin mirar todavía si acertó o no.',
+        ejemplo: 'Ejemplo: en una beca, que el porcentaje de seleccionados sea parecido entre hombres y mujeres.',
+        go: 'rep',
+      },
+      {
+        label: '¿En qué se equivoca con cada grupo? (errores)',
+        help: 'Te fijas en si el modelo comete sus errores (marcar de más o dejar fuera) por igual en todos los grupos.',
+        ejemplo: 'Ejemplo: que no marque por error como "riesgoso" a un grupo más que a otro.',
+        go: 'confia',
+      },
     ],
   },
   rep: {
@@ -225,8 +235,11 @@ export const MetricSelectorTree: React.FC<Props> = ({ onComplete }) => {
                 >
                   <span className="flex items-center justify-between gap-3">
                     <span>
-                      <span className="font-medium" style={{ color: TEAL }}>{o.label}</span>
-                      {o.help && <span className="block text-sm text-gray-500 mt-0.5">{o.help}</span>}
+                      <span className="font-medium" style={{ color: TERRA }}>{o.label}</span>
+                      {o.help && <span className="block text-sm text-gray-600 mt-0.5">{o.help}</span>}
+                      {o.ejemplo && (
+                        <span className="block text-xs italic mt-1" style={{ color: TEAL }}>{o.ejemplo}</span>
+                      )}
                     </span>
                     <ArrowRight size={16} className="shrink-0 text-gray-300 group-hover:text-gray-500" />
                   </span>

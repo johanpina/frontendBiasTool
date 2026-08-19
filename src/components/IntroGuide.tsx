@@ -8,20 +8,20 @@ import {
 export const IntroGuide: React.FC = () => {
   const columnas = [
     {
-      icon: <Brain className="h-5 w-5 text-indigo-600" />,
-      bg: 'bg-indigo-50',
+      icon: <Brain className="h-5 w-5 text-burgundy" />,
+      bg: 'bg-rose-tint',
       titulo: 'Predicciones del modelo',
       desc: 'Lo que tu modelo predijo para cada caso (0/1, o varias clases).',
     },
     {
-      icon: <CheckCircle2 className="h-5 w-5 text-emerald-600" />,
-      bg: 'bg-emerald-50',
+      icon: <CheckCircle2 className="h-5 w-5 text-[#2F6B4F]" />,
+      bg: 'bg-[#E7F0EA]',
       titulo: 'Valores reales',
       desc: 'Lo que realmente ocurrió: las etiquetas verdaderas a comparar.',
     },
     {
-      icon: <Users className="h-5 w-5 text-violet-600" />,
-      bg: 'bg-violet-50',
+      icon: <Users className="h-5 w-5 text-[#A2611F]" />,
+      bg: 'bg-[#F6EADB]',
       titulo: 'Variables protegidas',
       desc: 'Atributos como etnia, sexo o edad sobre los que evaluar sesgos.',
     },
@@ -35,10 +35,10 @@ export const IntroGuide: React.FC = () => {
   ];
 
   const metricas = [
-    { s: 'FPR', n: 'Falsos Positivos', d: 'Marca como positivo a quien no lo era. Cuídala si un positivo trae una acción punitiva.', c: 'text-red-700 bg-red-50' },
-    { s: 'FNR', n: 'Falsos Negativos', d: 'Se le escapa un caso positivo real. Cuídala si un positivo da acceso a un beneficio.', c: 'text-amber-700 bg-amber-50' },
-    { s: 'FOR', n: 'Falsas Omisiones', d: 'De los marcados negativos, cuántos eran positivos. Relevante al negar un recurso.', c: 'text-ink-80 bg-indigo-50' },
-    { s: 'FDR', n: 'Falsos Descubrimientos', d: 'De los marcados positivos, cuántos eran erróneos. Mide la precisión por grupo.', c: 'text-violet-700 bg-violet-50' },
+    { s: 'FPR', n: 'Falsos Positivos', d: 'Marca como positivo a quien no lo era. Cuídala si un positivo trae una acción punitiva.', c: 'text-burgundy bg-rose-tint' },
+    { s: 'FNR', n: 'Falsos Negativos', d: 'Se le escapa un caso positivo real. Cuídala si un positivo da acceso a un beneficio.', c: 'text-[#A2611F] bg-[#F6EADB]' },
+    { s: 'FOR', n: 'Falsas Omisiones', d: 'De los marcados negativos, cuántos eran positivos. Relevante al negar un recurso.', c: 'text-[#2F6B4F] bg-[#E7F0EA]' },
+    { s: 'FDR', n: 'Falsos Descubrimientos', d: 'De los marcados positivos, cuántos eran erróneos. Mide la precisión por grupo.', c: 'text-[#A15E6B] bg-rose-tint' },
   ];
 
   return (

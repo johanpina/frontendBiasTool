@@ -281,12 +281,18 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
             <h2 className="text-xl font-semibold mb-2">Ajustar Tolerancia y Recalcular</h2>
 
-            <p className="text-gray-700 mb-4">
+            <p className="text-gray-700 mb-3">
 
-              La tolerancia define cuánta <b>disparidad</b> se acepta antes de considerar un subgrupo inequitativo.
-              Un valor de <b>1.25×</b> equivale a la regla del 80%: se tolera hasta un 25% de diferencia respecto al grupo de referencia.
+              La tolerancia marca cuánta <b>diferencia</b> aceptas entre un grupo y el grupo de referencia antes de
+              llamarla inequitativa. <b>Más a la derecha</b> = más permisivo; <b>más a la izquierda</b> = más estricto.
 
             </p>
+
+            <div className="bg-indigo-50 border border-rose-light rounded-lg p-3 mb-4 text-sm text-ink-80">
+              <b>Cómo leerlo:</b> con <b>{localThreshold.toFixed(2)}×</b>, un grupo es <b>equitativo</b> si su valor
+              queda entre <b>{(1 / localThreshold).toFixed(2)}</b> y <b>{localThreshold.toFixed(2)}</b> veces el del
+              grupo de referencia (1.00 = sin diferencia). Ej.: 1.25× tolera hasta un 25% de diferencia (la “regla del 80%”).
+            </div>
 
             <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-2">
 
@@ -313,10 +319,8 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
             </div>
 
             <p className="text-sm text-gray-600 mb-4">
-
-              Se considera <b>equitativo</b> si la disparidad del subgrupo está entre{' '}
-              <b>{(1 / localThreshold).toFixed(2)}</b> y <b>{localThreshold.toFixed(2)}</b> (donde 1.00 = sin disparidad).
-
+              Rango equitativo actual: <b>{(1 / localThreshold).toFixed(2)}</b> – <b>{localThreshold.toFixed(2)}</b>.
+              Pulsa <b>Recalcular</b> para aplicar el nuevo valor.
             </p>
 
             <div className="flex justify-end">

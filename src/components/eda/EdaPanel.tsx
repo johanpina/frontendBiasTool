@@ -23,11 +23,13 @@ const ALERT_STYLE: Record<string, { border: string; bg: string; icon: React.Reac
   info: { border: '#2a78d6', bg: '#eff6ff', icon: <Info size={18} color={STATUS.info} /> },
 };
 
+// Tonos de la paleta Civic Rose, distinguibles entre sí:
+// resultado = verde éxito · protegida = burdeos · atributo = ámbar · id = neutro.
 const ROLE_LABEL: Record<string, { label: string; className: string }> = {
-  outcome: { label: 'resultado', className: 'bg-emerald-50 text-emerald-700' },
-  protected: { label: 'protegida', className: 'bg-violet-50 text-violet-700' },
-  id: { label: 'identificador', className: 'bg-gray-100 text-gray-500' },
-  feature: { label: 'atributo', className: 'bg-blue-50 text-blue-700' },
+  outcome: { label: 'resultado', className: 'bg-[#E7F0EA] text-[#2F6B4F]' },
+  protected: { label: 'protegida', className: 'bg-rose-tint text-burgundy' },
+  id: { label: 'identificador', className: 'bg-paper-deep text-ink-40' },
+  feature: { label: 'atributo', className: 'bg-[#F6EADB] text-[#A2611F]' },
 };
 
 const StatTile: React.FC<{ icon: React.ReactNode; value: React.ReactNode; label: string; accent?: string }> =
@@ -170,8 +172,8 @@ export const EdaPanel: React.FC<Props> = ({ eda, loading, error }) => {
               {eda.columns.map((c) => {
                 const r = ROLE_LABEL[c.role_hint] || ROLE_LABEL.feature;
                 return (
-                  <span key={c.name} className="inline-flex items-center gap-1.5 text-sm border border-gray-200 rounded-lg px-2.5 py-1">
-                    <span className="font-medium text-gray-800">{c.name}</span>
+                  <span key={c.name} className="inline-flex items-center gap-1.5 text-sm border border-rose-light rounded-lg px-2.5 py-1">
+                    <span className="font-medium text-ink-80">{c.name}</span>
                     <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${r.className}`}>{r.label}</span>
                   </span>
                 );
