@@ -55,8 +55,8 @@ export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BAS
           <li>Validar si hay suficiente información por grupo para realizar comparaciones significativas.</li>
           <li>Interpretar mejor los resultados de disparidad al tener claridad sobre los volúmenes que los sustentan.</li>
         </ul>
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded mt-4">
-          <span className="font-semibold text-blue-800">Recomendación:</span> Pon atención especial a los subgrupos con pocos casos (bajo “Tamaño de grupo”), ya que los resultados en esos grupos pueden ser menos estables o confiables.
+        <div className="bg-indigo-50 border-l-4 border-burgundy p-4 rounded mt-4">
+          <span className="font-semibold text-burgundy">Recomendación:</span> Pon atención especial a los subgrupos con pocos casos (bajo “Tamaño de grupo”), ya que los resultados en esos grupos pueden ser menos estables o confiables.
         </div>
       </div>
       <DataTable

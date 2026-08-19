@@ -52,7 +52,7 @@ export const SatisfactionSurvey: React.FC = () => {
 
   if (sent) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex items-center gap-3">
+      <div className="bg-white rounded-xl shadow-sm border border-rose-light p-6 flex items-center gap-3">
         <CheckCircle2 className="h-6 w-6 text-emerald-600" />
         <p className="text-gray-800 font-medium">¡Gracias por tu retroalimentación! Nos ayuda a mejorar la herramienta.</p>
       </div>
@@ -60,7 +60,7 @@ export const SatisfactionSurvey: React.FC = () => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <div className="bg-white rounded-xl shadow-sm border border-rose-light p-6">
       <div className="flex items-center gap-2 mb-1">
         <MessageSquareHeart className="h-5 w-5 text-indigo-600" />
         <h3 className="text-lg font-semibold text-gray-900">Encuesta de satisfacción</h3>
@@ -77,14 +77,14 @@ export const SatisfactionSurvey: React.FC = () => {
           onChange={(e) => setComment(e.target.value)}
           placeholder="Comentarios o sugerencias (opcional)"
           rows={3}
-          className="mt-4 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-4 w-full border border-rose-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Correo electrónico (opcional)"
-          className="mt-3 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-3 w-full border border-rose-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
         <div className="flex justify-end mt-4">
           <button

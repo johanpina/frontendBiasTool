@@ -265,9 +265,9 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
             </ul>
 
-            <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded mt-4">
+            <div className="bg-indigo-50 border-l-4 border-burgundy p-3 rounded mt-4">
 
-              <span className="font-semibold text-blue-800">Nota:</span> Desliza la tabla hacia la derecha para explorar todas las métricas disponibles: exactitud, tasas de error, sensibilidad, precisión, entre otras.
+              <span className="font-semibold text-burgundy">Nota:</span> Desliza la tabla hacia la derecha para explorar todas las métricas disponibles: exactitud, tasas de error, sensibilidad, precisión, entre otras.
 
             </div>
 

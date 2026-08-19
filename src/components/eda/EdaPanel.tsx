@@ -211,7 +211,7 @@ export const EdaPanel: React.FC<Props> = ({ eda, loading, error }) => {
       {/* --- VISTA DE SESGO --- */}
       {tab === 'sesgo' && (
         <div className="space-y-5">
-          <div className="rounded-xl border-l-4 p-4" style={{ borderColor: '#2a78d6', background: '#eff6ff' }}>
+          <div className="rounded-xl border-l-4 p-4" style={{ borderColor: '#7A3B48', background: '#FBF3F4' }}>
             <p className="text-sm text-gray-800">
               <b>Vista preliminar de sesgo.</b> Compara cómo se reparte el <b>resultado</b> (predicción o etiqueta) entre los
               grupos de una <b>variable protegida</b>. Diferencias grandes entre grupos anticipan posibles inequidades que el

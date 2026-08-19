@@ -37,7 +37,7 @@ export const IntroGuide: React.FC = () => {
   const metricas = [
     { s: 'FPR', n: 'Falsos Positivos', d: 'Marca como positivo a quien no lo era. Cuídala si un positivo trae una acción punitiva.', c: 'text-red-700 bg-red-50' },
     { s: 'FNR', n: 'Falsos Negativos', d: 'Se le escapa un caso positivo real. Cuídala si un positivo da acceso a un beneficio.', c: 'text-amber-700 bg-amber-50' },
-    { s: 'FOR', n: 'Falsas Omisiones', d: 'De los marcados negativos, cuántos eran positivos. Relevante al negar un recurso.', c: 'text-blue-700 bg-blue-50' },
+    { s: 'FOR', n: 'Falsas Omisiones', d: 'De los marcados negativos, cuántos eran positivos. Relevante al negar un recurso.', c: 'text-ink-80 bg-indigo-50' },
     { s: 'FDR', n: 'Falsos Descubrimientos', d: 'De los marcados positivos, cuántos eran erróneos. Mide la precisión por grupo.', c: 'text-violet-700 bg-violet-50' },
   ];
 
@@ -104,13 +104,13 @@ export const IntroGuide: React.FC = () => {
       </div>
 
       {/* Nota legal y requisitos, condensado */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 rounded-r-lg p-4 text-sm text-blue-900">
+      <div className="bg-indigo-50 border-l-4 border-burgundy rounded-r-lg p-4 text-sm text-ink-80">
         <p className="mb-1">
           <b>Marco legal.</b> La <b>Ley N.º 20.609</b> establece 16 categorías protegidas frente a la
           discriminación arbitraria (<a className="underline" href="https://www.bcn.cl/leychile/navegar?i=1042092" target="_blank" rel="noreferrer">ver ley</a>).
           También puedes evaluar variables <i>proxy</i> asociadas a ellas.
         </p>
-        <p className="text-blue-800/90">
+        <p className="text-burgundy/90">
           Requisitos: cada columna debe estar claramente identificada, las variables protegidas deben ser
           <b> categóricas</b> y sin valores faltantes en las columnas clave.
         </p>

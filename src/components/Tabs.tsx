@@ -14,15 +14,15 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
   return (
     <div className="w-full">
       <Tab.Group selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+        <Tab.List className="flex gap-1 rounded-xl bg-indigo-50 border border-rose-light p-1">
           {tabs.map((tab) => (
             <Tab
               key={tab.name}
               className={({ selected }) =>
-                `w-full rounded-lg py-2.5 text-sm font-medium leading-5
+                `w-full rounded-lg py-2.5 text-sm font-semibold leading-5 transition-colors focus:outline-none
                  ${selected
-                  ? 'bg-white text-blue-700 shadow'
-                  : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                  ? 'bg-white text-burgundy shadow-sm'
+                  : 'text-ink-60 hover:text-burgundy hover:bg-white/50'
                 }`
               }
             >
@@ -32,10 +32,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
         </Tab.List>
         <Tab.Panels className="mt-6">
           {tabs.map((tab, idx) => (
-            <Tab.Panel
-              key={idx}
-              className="rounded-xl bg-white p-3"
-            >
+            <Tab.Panel key={idx} className="focus:outline-none">
               {tab.content}
             </Tab.Panel>
           ))}

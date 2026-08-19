@@ -16,6 +16,7 @@ import { useEda } from '../hooks/useEda';
 import { EdaPanel } from './eda/EdaPanel';
 import { IntroGuide } from './IntroGuide';
 import { SatisfactionSurvey } from './SatisfactionSurvey';
+import { SectionHeader } from './SectionHeader';
 import { Download } from 'lucide-react';
 import { SesgosTabContent } from './SesgosTabContent';
 import { EquidadTabContent } from './EquidadTabContent';
@@ -142,19 +143,27 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-paper py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-center mb-8">
+    <div className="min-h-screen bg-paper">
+      {/* Barra superior estilo EIA */}
+      <header className="flex items-center justify-between px-5 sm:px-10 py-3.5 border-b border-rose-light bg-white sticky top-0 z-20">
+        <div className="flex items-center gap-3">
           <button
             onClick={onBack}
-            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors duration-200"
+            aria-label="Volver al inicio"
+            className="p-2 rounded-full hover:bg-indigo-50 transition-colors"
           >
-            <ArrowLeft className="h-6 w-6 text-gray-600" />
+            <ArrowLeft className="h-5 w-5 text-burgundy" />
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Herramienta de Análisis de Sesgo y Equidad
-          </h1>
+          <img src="/images/goblab-uai.png" alt="GobLab - Universidad Adolfo Ibáñez" className="h-8 w-auto" />
+          <span className="hidden sm:block w-px h-6 bg-rose-light" />
+          <div className="hidden sm:block leading-none">
+            <span className="block font-mono text-[10px] uppercase tracking-wider text-rose">Herramientas · Algoritmos éticos</span>
+            <span className="block font-display text-base font-semibold text-ink">Análisis de Sesgos y Equidad</span>
+          </div>
         </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto py-8 px-4">
 
         {showAnalysis ? (
           <div>
@@ -165,6 +174,13 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               Volver a la configuración
             </button>
+
+            <SectionHeader
+              eyebrow="Resultados · Análisis del modelo"
+              title="Resultados de tu evaluación"
+              description="Explora el análisis de sesgos y el de equidad. Al final podrás descargar el informe en PDF."
+              className="mb-6"
+            />
 
             {isMulticlass && (
               <div className="mb-6 bg-white p-5 rounded-lg shadow-sm border border-indigo-200">
@@ -232,16 +248,20 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               ]}
             />
 
-            <div className="mt-10 space-y-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="mt-12 space-y-6">
+              <SectionHeader
+                eyebrow="Paso final · Informe"
+                title="Descarga y evalúa"
+              />
+              <div className="bg-indigo-50 border border-rose-light rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Descarga tu informe</h3>
-                  <p className="text-sm text-gray-600">Genera un PDF con el resumen, las tablas de disparidad y los gráficos de tu análisis.</p>
+                  <h3 className="font-display text-lg font-semibold text-ink">Tu informe está listo</h3>
+                  <p className="text-sm text-ink-60">Incluye los metadatos del análisis, las tablas de disparidad y los gráficos de equidad.</p>
                 </div>
                 <button
                   onClick={onDownloadPdf}
                   disabled={pdfLoading || !effectiveResults}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-gray-300 whitespace-nowrap"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy text-white font-semibold rounded-md shadow-sm hover:bg-rose disabled:bg-ink-20 whitespace-nowrap transition-colors"
                 >
                   <Download className="h-5 w-5" />
                   {pdfLoading ? 'Generando PDF…' : 'Descargar informe PDF'}
@@ -270,11 +290,12 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             {previewData && (
               <>
                 {eda && (
-                  <div className="mt-10 mb-2 border-t border-gray-200 pt-8">
-                    <h2 className="text-2xl font-bold text-gray-900">Configuración del análisis</h2>
-                    <p className="text-gray-600">
-                      Con el panorama de tus datos claro, selecciona las columnas y la tolerancia para medir la equidad.
-                    </p>
+                  <div className="mt-10 mb-2 border-t border-line pt-8">
+                    <SectionHeader
+                      eyebrow="Paso 02 · Configuración"
+                      title="Configuración del análisis"
+                      description="Con el panorama de tus datos claro, selecciona las columnas y la tolerancia para medir la equidad."
+                    />
                   </div>
                 )}
 
