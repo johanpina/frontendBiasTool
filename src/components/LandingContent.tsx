@@ -91,18 +91,49 @@ const STEPS = [
   'Descarga tu informe',
 ];
 
+// Opciones de registro (estilo EIA), bajo el correo.
+const ORIGENES = ['Gobierno central', 'Municipalidad', 'Academia', 'Sociedad civil / ONG', 'Sector privado', 'Otro'];
+const TIPOS = ['Ciencia de datos / IA', 'Desarrollo / TI', 'Dirección / gestión', 'Investigación', 'Estudiante', 'Otro'];
+
+const PillGroup: React.FC<{ label: string; options: string[]; value: string; onChange: (v: string) => void }> =
+  ({ label, options, value, onChange }) => (
+  <div>
+    <label className="block text-sm font-medium text-ink-80 mb-1.5">{label}</label>
+    <div className="flex flex-wrap gap-2">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          onClick={() => onChange(value === o ? '' : o)}
+          className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+            value === o
+              ? 'bg-burgundy text-white border-burgundy'
+              : 'bg-white text-ink-80 border-rose-light hover:border-burgundy'
+          }`}
+        >
+          {o}
+        </button>
+      ))}
+    </div>
+  </div>
+);
+
 export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
   const [email, setEmail] = useState('');
+  const [origen, setOrigen] = useState('');
+  const [tipo, setTipo] = useState('');
+  const [consent, setConsent] = useState(false);
   const [starting, setStarting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStarting(true);
-    if (email.trim()) {
-      registerToolUser(email.trim().toLowerCase());
+    // El registro a Supabase se envía SOLO si la persona acepta; si no, igual entra.
+    if (consent) {
+      const origin = [origen, tipo].filter(Boolean).join(' · ') || undefined;
+      registerToolUser(email.trim().toLowerCase(), origin);
     }
     trackToolStart();
-    setEmail('');
     onStart();
   };
 
@@ -215,6 +246,23 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
                 className="w-full border border-rose-light bg-indigo-50 rounded-md px-4 py-2.5 text-sm focus:outline-none focus:ring-1 focus:ring-burgundy focus:border-burgundy"
               />
             </div>
+
+            <PillGroup label="¿Desde dónde participas?" options={ORIGENES} value={origen} onChange={setOrigen} />
+            <PillGroup label="Tipo de usuario" options={TIPOS} value={tipo} onChange={setTipo} />
+
+            <label className="flex items-start gap-2.5 text-sm text-ink-60 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 shrink-0"
+              />
+              <span>
+                Acepto registrar mi participación (correo, institución y rol) para ayudar a mejorar la
+                herramienta. Es <b>opcional</b>: puedes iniciar igualmente sin marcarla.
+              </span>
+            </label>
+
             <button
               type="submit"
               disabled={starting}

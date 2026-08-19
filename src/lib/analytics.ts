@@ -69,7 +69,14 @@ export function trackToolExport(format: string = "csv") {
   });
 }
 
-export async function registerToolUser(email: string) {
+/**
+ * Registra la participación en la tabla `tool_users` de Supabase.
+ * `origin` (opcional) combina "de dónde viene · tipo de usuario" — la tabla solo
+ * tiene la columna `origin`, así que ambos datos van ahí. Si no hay correo se usa
+ * el genérico. Falla en silencio para no bloquear el ingreso a la herramienta.
+ */
+export async function registerToolUser(email: string, origin?: string) {
+  gtag("event", "tool_register", { tool_name: TOOL_NAME });
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/tool_users`, {
@@ -80,7 +87,11 @@ export async function registerToolUser(email: string) {
         "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
         "Prefer": "return=minimal",
       },
-      body: JSON.stringify({ email, tool_name: TOOL_NAME }),
+      body: JSON.stringify({
+        email: email || ANON_EMAIL,
+        tool_name: TOOL_NAME,
+        ...(origin ? { origin } : {}),
+      }),
     });
   } catch {
     // No bloquear el flujo si el registro falla
