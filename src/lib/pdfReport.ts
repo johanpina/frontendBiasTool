@@ -13,6 +13,8 @@ const INK: [number, number, number] = [42, 38, 34];         // #2A2622
 const MUTED: [number, number, number] = [90, 83, 76];       // #5A534C
 const SUCCESS: [number, number, number] = [47, 107, 79];    // #2F6B4F
 const DANGER: [number, number, number] = [176, 42, 58];     // rojo civic
+const WARN: [number, number, number] = [162, 97, 31];       // ámbar de la paleta
+const INFO: [number, number, number] = [90, 83, 76];        // neutro (ink60)
 
 async function fetchPlot(url: string, body: unknown): Promise<string | null> {
   try {
@@ -37,6 +39,7 @@ export async function generatePdfReport(
   results: any,
   BASE_API_URL: string,
   recommendedMetricKey: string | null = null,
+  eda: any = null,
 ): Promise<void> {
   const tables = results?.tables || {};
   const meta = results?.metadata || {};
@@ -71,7 +74,88 @@ export async function generatePdfReport(
   doc.setFont('times', 'bold'); doc.setFontSize(22); doc.setTextColor(...INK);
   doc.text('Informe de Sesgo y Equidad', M, y + 26); y += 44;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...MUTED);
-  doc.text(`GobLab UAI · Generado el ${new Date().toLocaleString('es-CL')}`, M, y); y += 22;
+  doc.text(`GobLab UAI · Generado el ${new Date().toLocaleString('es-CL')}`, M, y); y += 24;
+
+  // --- Página inicial: resultado del Análisis Exploratorio (EDA) ---
+  const tableBaseEda = {
+    styles: { lineColor: LINE, lineWidth: 0.5, textColor: INK as any, font: 'helvetica' },
+    margin: { left: M, right: M },
+  };
+  if (eda) {
+    doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...ROSE);
+    doc.text('PASO 01 · EXPLORACIÓN DE LOS DATOS', M, y);
+    doc.setFont('times', 'bold'); doc.setFontSize(16); doc.setTextColor(...INK);
+    doc.text('Análisis exploratorio de los datos', M, y + 18); y += 32;
+
+    // Panorama general.
+    autoTable(doc, {
+      ...tableBaseEda,
+      startY: y,
+      head: [['Filas', 'Columnas', 'Celdas faltantes', 'Alertas detectadas']],
+      body: [[
+        Number(eda.n_rows).toLocaleString('es-CL'),
+        String(eda.n_cols),
+        `${eda.missing_cells_pct}%`,
+        String((eda.alerts || []).length),
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold', halign: 'center' },
+      bodyStyles: { fontSize: 13, fontStyle: 'bold', halign: 'center' },
+    });
+    y = (doc as any).lastAutoTable.finalY + 22;
+
+    // Alertas de calidad y posibles sesgos.
+    const alerts: any[] = eda.alerts || [];
+    if (alerts.length) {
+      if (y > H - 120) newPage();
+      doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
+      doc.text('Alertas de calidad y posibles sesgos', M, y); y += 8;
+      const LEVEL: Record<string, string> = { critical: 'Crítica', warning: 'Advertencia', info: 'Informativa' };
+      autoTable(doc, {
+        ...tableBaseEda,
+        startY: y,
+        head: [['Nivel', 'Columnas', 'Descripción']],
+        body: alerts.map((a) => [LEVEL[a.level] || a.level, (a.columns || []).join(', '), a.message]),
+        theme: 'striped',
+        headStyles: { fillColor: ROSE, textColor: INK, fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 8.5 },
+        alternateRowStyles: { fillColor: ROSE_TINT },
+        columnStyles: { 0: { cellWidth: 72 }, 1: { cellWidth: 90 } },
+        didParseCell: (data) => {
+          if (data.section === 'body' && data.column.index === 0) {
+            const raw = data.cell.raw;
+            data.cell.styles.textColor = raw === 'Crítica' ? DANGER : raw === 'Advertencia' ? WARN : INFO;
+            data.cell.styles.fontStyle = 'bold';
+          }
+        },
+      });
+      y = (doc as any).lastAutoTable.finalY + 22;
+    }
+
+    // Roles sugeridos de las columnas.
+    const cols: any[] = eda.columns || [];
+    if (cols.length) {
+      if (y > H - 120) newPage();
+      doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
+      doc.text('Roles sugeridos de las columnas', M, y); y += 8;
+      const ROLE: Record<string, string> = { outcome: 'resultado', protected: 'protegida', id: 'identificador', feature: 'atributo' };
+      const DTYPE: Record<string, string> = { numeric: 'Numérica', categorical: 'Categórica', binary: 'Binaria' };
+      autoTable(doc, {
+        ...tableBaseEda,
+        startY: y,
+        head: [['Columna', 'Tipo', 'Rol sugerido', 'Únicos', '% faltantes']],
+        body: cols.map((c) => [c.name, DTYPE[c.dtype] || c.dtype, ROLE[c.role_hint] || c.role_hint, String(c.unique), `${c.missing_pct}%`]),
+        theme: 'striped',
+        headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 9, fontStyle: 'bold' },
+        bodyStyles: { fontSize: 9 },
+        alternateRowStyles: { fillColor: ROSE_PAPER },
+      });
+      y = (doc as any).lastAutoTable.finalY + 22;
+    }
+
+    // El análisis de sesgo/equidad empieza en una página nueva.
+    newPage();
+  }
 
   // --- Métrica recomendada a observar (si se usó el árbol del Paso 2) ---
   const recName = recommendedMetricName(recommendedMetricKey);
@@ -175,6 +259,7 @@ export async function generatePdfReport(
   for (const attr of attrs) {
     const rows = bias.filter((r) => r.attribute_name === attr);
     if (!rows.length) continue;
+    const refGroup = refs.find((x) => x.attribute === attr)?.group ?? null;
     if (y > H - 140) newPage();
     doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
     doc.text(`Disparidades — ${attr}`, M, y); y += 8;
@@ -183,7 +268,9 @@ export async function generatePdfReport(
       startY: y,
       head: [['Subgrupo', 'n', 'FPR', 'FNR', 'FOR', 'FDR', 'Conclusión']],
       body: rows.map((r) => [
-        String(r.attribute_value) + (r.insufficient_sample ? ' *' : ''),
+        String(r.attribute_value)
+          + (refGroup != null && String(r.attribute_value) === String(refGroup) ? ' (ref)' : '')
+          + (r.insufficient_sample ? ' *' : ''),
         num(r.group_size),
         num(r.fpr_disparity), num(r.fnr_disparity), num(r.for_disparity), num(r.fdr_disparity),
         verdict(r.fairness_conclusion),
@@ -203,7 +290,7 @@ export async function generatePdfReport(
   }
   if (y > H - 60) newPage();
   doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-  doc.text('Valores = disparidad respecto al grupo de referencia (1.00 = sin diferencia). * muestra insuficiente (no afecta el veredicto).', M, y);
+  doc.text('Valores = disparidad respecto al grupo de referencia (1.00 = sin diferencia). (ref) = grupo de referencia. * muestra insuficiente (no afecta el veredicto).', M, y);
   y += 20;
 
   // --- Gráficos (al final) ---

@@ -250,23 +250,25 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
               title="Métricas de Disparidad (Análisis de Equidad)"
 
-              data={results.tables.bias_metrics.map((row: any) => {
-
-                const out: any = {};
-
-                Object.keys(row).forEach((k) => {
-
-                  if (['score_threshold', 'insufficient_sample', 'model_id', 'k'].includes(k)) return;
-
-                  if (k.endsWith('_significance') || k.endsWith('_ref_group_value')) return;
-
-                  out[k] = row[k];
-
+              data={(() => {
+                const refMap: Record<string, string | null> = Object.fromEntries(
+                  referenceByAttribute(results.tables.bias_metrics, protectedColumns).map((r) => [r.attribute, r.group])
+                );
+                return results.tables.bias_metrics.map((row: any) => {
+                  const out: any = {};
+                  Object.keys(row).forEach((k) => {
+                    if (['score_threshold', 'insufficient_sample', 'model_id', 'k'].includes(k)) return;
+                    if (k.endsWith('_significance') || k.endsWith('_ref_group_value')) return;
+                    out[k] = row[k];
+                  });
+                  // Marca la fila del grupo de referencia con "(ref)".
+                  const ref = refMap[row.attribute_name];
+                  if (ref != null && String(row.attribute_value) === String(ref)) {
+                    out.attribute_value = `${row.attribute_value} (ref)`;
+                  }
+                  return out;
                 });
-
-                return out;
-
-              })}
+              })()}
 
               translateHeader={(h) => METRIC_TRANSLATIONS[h] || h}
 

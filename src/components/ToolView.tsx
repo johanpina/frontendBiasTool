@@ -137,7 +137,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     setPdfLoading(true);
     try {
       const { generatePdfReport } = await import('../lib/pdfReport');
-      await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric);
+      await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric, eda);
       trackToolExport('pdf');
     } finally {
       setPdfLoading(false);
