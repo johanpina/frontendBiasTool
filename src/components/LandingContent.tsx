@@ -180,7 +180,7 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
           </span>
           <h1 className="font-display font-medium text-ink leading-[1.02] tracking-tight mb-5"
               style={{ fontSize: 'clamp(32px, 4vw, 50px)', letterSpacing: '-1.5px' }}>
-            Medición de <em className="text-burgundy italic font-medium">sesgos</em>.
+            Medición de <em className="text-burgundy italic font-medium">sesgos</em> y equidad.
           </h1>
           <p className="text-base text-ink-60 leading-relaxed max-w-md mb-8">
             Evalúa si tu modelo de clasificación trata de forma equitativa a los distintos grupos de la población,
