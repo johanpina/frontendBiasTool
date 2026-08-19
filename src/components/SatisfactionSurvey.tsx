@@ -30,7 +30,21 @@ const Stars: React.FC<{ value: number; onChange: (v: number) => void; label: str
   );
 };
 
-export const SatisfactionSurvey: React.FC = () => {
+interface SatisfactionSurveyProps {
+  /** Se llama tras enviar la encuesta con éxito (p. ej. para descargar el PDF). */
+  onSubmitted?: () => void;
+  /** Acción para omitir la encuesta (p. ej. solo descargar). Si se define, se muestra el botón. */
+  onSkip?: () => void;
+  submitLabel?: string;
+  skipLabel?: string;
+}
+
+export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
+  onSubmitted,
+  onSkip,
+  submitLabel = 'Enviar respuesta',
+  skipLabel = 'Omitir',
+}) => {
   const [satisfaction, setSatisfaction] = useState(0);
   const [ease, setEase] = useState(0);
   const [usefulness, setUsefulness] = useState(0);
@@ -48,6 +62,7 @@ export const SatisfactionSurvey: React.FC = () => {
     await submitSatisfactionSurvey({ satisfaction, ease, usefulness, comment: comment.trim(), email: email.trim().toLowerCase() });
     setSending(false);
     setSent(true);
+    onSubmitted?.();
   };
 
   if (sent) {
@@ -86,13 +101,22 @@ export const SatisfactionSurvey: React.FC = () => {
           placeholder="Correo electrónico (opcional)"
           className="mt-3 w-full border border-rose-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
-        <div className="flex justify-end mt-4">
+        <div className="flex items-center justify-between gap-3 mt-4">
+          {onSkip ? (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="text-sm text-ink-60 hover:text-burgundy underline underline-offset-2"
+            >
+              {skipLabel}
+            </button>
+          ) : <span />}
           <button
             type="submit"
             disabled={!canSend || sending}
             className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
           >
-            {sending ? 'Enviando…' : 'Enviar respuesta'}
+            {sending ? 'Enviando…' : submitLabel}
           </button>
         </div>
       </form>

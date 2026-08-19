@@ -134,19 +134,22 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     };
   }, [results, isMulticlass, activeClass]);
 
-  const onDownloadPdf = async () => {
+  // Genera y descarga el PDF (se llama al enviar u omitir la encuesta).
+  const doDownloadPdf = async () => {
     if (!effectiveResults) return;
     setPdfLoading(true);
     try {
       const { generatePdfReport } = await import('../lib/pdfReport');
       await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric, eda);
       trackToolExport('pdf');
-      // Tras generar el PDF, invitamos a responder la encuesta de satisfacción.
-      setShowSurvey(true);
     } finally {
       setPdfLoading(false);
     }
   };
+
+  // El botón "Descargar informe PDF" abre primero la encuesta (que se puede omitir).
+  const onRequestDownload = () => setShowSurvey(true);
+  const onSkipSurvey = () => { setShowSurvey(false); doDownloadPdf(); };
 
   return (
     <div className="min-h-screen bg-paper">
@@ -265,7 +268,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                   <p className="text-sm text-ink-60">Incluye los metadatos del análisis, las tablas de disparidad y los gráficos de equidad.</p>
                 </div>
                 <button
-                  onClick={onDownloadPdf}
+                  onClick={onRequestDownload}
                   disabled={pdfLoading || !effectiveResults}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-burgundy text-white font-semibold rounded-md shadow-sm hover:bg-rose disabled:bg-ink-20 whitespace-nowrap transition-colors"
                 >
@@ -275,19 +278,24 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               </div>
             </div>
 
-            {/* La encuesta de satisfacción aparece solo al descargar el PDF */}
+            {/* Al pulsar "Descargar", primero se ofrece la encuesta (se puede omitir). */}
             {showSurvey && (
               <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div className="absolute inset-0 bg-black/50" onClick={() => setShowSurvey(false)} aria-hidden />
                 <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto">
                   <button
                     onClick={() => setShowSurvey(false)}
-                    aria-label="Cerrar"
+                    aria-label="Cerrar sin descargar"
                     className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-white/80 hover:bg-white border border-rose-light transition-colors"
                   >
                     <X className="h-5 w-5 text-ink-60" />
                   </button>
-                  <SatisfactionSurvey />
+                  <SatisfactionSurvey
+                    onSubmitted={doDownloadPdf}
+                    onSkip={onSkipSurvey}
+                    submitLabel="Enviar y descargar"
+                    skipLabel="Omitir y descargar"
+                  />
                 </div>
               </div>
             )}
