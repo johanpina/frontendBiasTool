@@ -31,6 +31,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  // Métrica recomendada por el árbol (Paso 2), para destacarla en el PDF.
+  const [recommendedMetric, setRecommendedMetric] = useState<string | null>(null);
   
   const {
     file,
@@ -135,7 +137,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     setPdfLoading(true);
     try {
       const { generatePdfReport } = await import('../lib/pdfReport');
-      await generatePdfReport(effectiveResults, BASE_API_URL);
+      await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric);
       trackToolExport('pdf');
     } finally {
       setPdfLoading(false);
@@ -333,7 +335,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                         !columnSelection.protected.includes(col)
                     )
                   }
-                  onWizardComplete={() => {}} // Placeholder
+                  onWizardComplete={setRecommendedMetric}
                   fairnessThreshold={fairnessThreshold}
                   onThresholdChange={handleThresholdChange}
                 />

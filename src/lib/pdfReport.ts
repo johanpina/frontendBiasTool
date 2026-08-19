@@ -1,5 +1,6 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { referenceByAttribute, refMethodLabel, recommendedMetricName } from './referenceInfo';
 
 // Paleta "Civic Rose" (misma identidad de la herramienta / EIA).
 const BURGUNDY: [number, number, number] = [122, 59, 72];   // #7A3B48
@@ -32,7 +33,11 @@ const num = (v: unknown) => (typeof v === 'number' ? (Number.isInteger(v) ? Stri
 const verdict = (v: unknown) => (v === 'Unfair' || v === 'No Equitativo' ? 'No Equitativo' : v === 'Fair' || v === 'Equitativo' ? 'Equitativo' : String(v ?? '—'));
 
 /** Genera y descarga un informe PDF con las tablas y gráficos del análisis. */
-export async function generatePdfReport(results: any, BASE_API_URL: string): Promise<void> {
+export async function generatePdfReport(
+  results: any,
+  BASE_API_URL: string,
+  recommendedMetricKey: string | null = null,
+): Promise<void> {
   const tables = results?.tables || {};
   const meta = results?.metadata || {};
   const bias: any[] = tables.bias_metrics || [];
@@ -68,6 +73,19 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
   doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...MUTED);
   doc.text(`GobLab UAI · Generado el ${new Date().toLocaleString('es-CL')}`, M, y); y += 22;
 
+  // --- Métrica recomendada a observar (si se usó el árbol del Paso 2) ---
+  const recName = recommendedMetricName(recommendedMetricKey);
+  if (recName) {
+    const boxH = 40;
+    doc.setFillColor(...ROSE_PAPER); doc.setDrawColor(...ROSE);
+    doc.roundedRect(M, y, W - 2 * M, boxH, 4, 4, 'FD');
+    doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...BURGUNDY);
+    doc.text('MÉTRICA RECOMENDADA A OBSERVAR', M + 12, y + 15);
+    doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
+    doc.text(recName, M + 12, y + 31);
+    y += boxH + 18;
+  }
+
   // Estilos comunes de tabla (líneas civic).
   // Nota: no pintamos el fondo en didDrawPage porque ese hook corre DESPUÉS de
   // dibujar la tabla y la taparía. El fondo se pinta al inicio y en newPage().
@@ -84,6 +102,7 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
     ['Registros analizados', String(nFilas)],
     ['Variables protegidas', (meta.protected_attributes || []).join(', ') || '—'],
     ['Tolerancia de disparidad', `${Number(tau).toFixed(2)}×  (equitativo entre ${(1 / tau).toFixed(2)} y ${Number(tau).toFixed(2)})`],
+    ['Grupo de referencia', refMethodLabel(meta.ref_method, meta.performance_metric)],
     ['Muestra mínima por subgrupo', String(meta.min_group_size ?? 50)],
     ['Tipo de modelo', meta.task_type === 'multiclass' ? `Multiclase — clase: ${meta.selected_class ?? ''}` : 'Binario'],
   ];
@@ -121,8 +140,38 @@ export async function generatePdfReport(results: any, BASE_API_URL: string): Pro
   });
   y = (doc as any).lastAutoTable.finalY + 26;
 
-  // --- Disparidades por subgrupo (por atributo) ---
+  // --- Grupo de referencia por atributo ---
   const attrs: string[] = meta.protected_attributes || [...new Set(bias.map((r) => r.attribute_name))];
+  const refs = referenceByAttribute(bias, attrs);
+  if (refs.length) {
+    if (y > H - 120) newPage();
+    doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
+    doc.text('Grupo de referencia por atributo', M, y); y += 6;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
+    doc.text(`Método: ${refMethodLabel(meta.ref_method, meta.performance_metric)}. Cada subgrupo se compara con su referencia (vale 1.00).`, M, y + 8); y += 16;
+    autoTable(doc, {
+      ...tableBase,
+      startY: y,
+      head: [['Atributo', 'Grupo de referencia']],
+      body: refs.map((r) => [
+        r.attribute,
+        r.group ?? (Object.entries(r.perMetric).map(([m, g]) => `${m.toUpperCase()}: ${g}`).join('  ·  ') || '—'),
+      ]),
+      theme: 'striped',
+      headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 10 },
+      alternateRowStyles: { fillColor: ROSE_PAPER },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 1) {
+          data.cell.styles.textColor = BURGUNDY;
+          data.cell.styles.fontStyle = 'bold';
+        }
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 26;
+  }
+
+  // --- Disparidades por subgrupo (por atributo) ---
   for (const attr of attrs) {
     const rows = bias.filter((r) => r.attribute_name === attr);
     if (!rows.length) continue;

@@ -9,6 +9,10 @@ import { DisparityPlotter } from './bias-analysis/DisparityPlotter';
 
 import { DataTable } from './DataTable';
 
+import { SectionHeader } from './SectionHeader';
+
+import { referenceByAttribute, refMethodLabel } from '../lib/referenceInfo';
+
 import { METRIC_TRANSLATIONS } from '../constants';
 
 
@@ -195,7 +199,38 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
         <div className="space-y-8 mt-8">
 
-          <DisparityPlotter 
+          {/* --- Grupo de referencia: contra qué se compara cada subgrupo --- */}
+          {(() => {
+            const refs = referenceByAttribute(results.tables.bias_metrics, protectedColumns);
+            if (!refs.length) return null;
+            const metodo = refMethodLabel(results.metadata?.ref_method, results.metadata?.performance_metric);
+            return (
+              <div className="bg-white p-6 rounded-2xl shadow-sm border border-rose-light">
+                <SectionHeader
+                  eyebrow="Grupo de referencia"
+                  title="¿Contra qué se compara cada grupo?"
+                  description={<>Método usado: <b>{metodo}</b>. Cada subgrupo se compara con su grupo de referencia, que por definición vale <b>1.00</b> (sin diferencia).</>}
+                />
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  {refs.map((r) => (
+                    <span key={r.attribute} className="inline-flex items-center gap-2 border border-rose-light rounded-lg px-3 py-2 text-sm bg-indigo-50">
+                      <span className="text-ink-60">{r.attribute}</span>
+                      <span className="text-ink-20">→</span>
+                      {r.group ? (
+                        <span className="font-semibold text-burgundy">{r.group}</span>
+                      ) : (
+                        <span className="font-semibold text-burgundy" title={Object.entries(r.perMetric).map(([m, g]) => `${m.toUpperCase()}: ${g}`).join(' · ')}>
+                          varía por métrica
+                        </span>
+                      )}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          <DisparityPlotter
 
             biasMetrics={results.tables.bias_metrics}
 
