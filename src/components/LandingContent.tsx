@@ -91,9 +91,22 @@ const STEPS = [
   'Descarga tu informe',
 ];
 
-// Opciones de registro (estilo EIA), bajo el correo.
-const ORIGENES = ['Gobierno central', 'Municipalidad', 'Academia', 'Sociedad civil / ONG', 'Sector privado', 'Otro'];
-const TIPOS = ['Ciencia de datos / IA', 'Desarrollo / TI', 'Dirección / gestión', 'Investigación', 'Estudiante', 'Otro'];
+// Opciones de registro (mismas de la EIA para "origen"), bajo el correo.
+const ORIGENES = [
+  'Organismo público',
+  'Empresa privada',
+  'Institución académica',
+  'Organización de la sociedad civil',
+  'Persona independiente',
+];
+const TIPOS = [
+  'Ciencia de datos / IA',
+  'Desarrollo / Ingeniería',
+  'Dirección / jefatura',
+  'Investigación',
+  'Estudiante',
+  'Otro',
+];
 
 const PillGroup: React.FC<{ label: string; options: string[]; value: string; onChange: (v: string) => void }> =
   ({ label, options, value, onChange }) => (
