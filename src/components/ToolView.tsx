@@ -192,41 +192,58 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             />
 
             {isMulticlass && (
-              <div className="mb-6 bg-white p-5 rounded-lg shadow-sm border border-indigo-200">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <label className="font-semibold text-gray-800 whitespace-nowrap">
-                    Clase a analizar (uno-contra-el-resto):
-                  </label>
-                  <select
-                    value={activeClass ?? ''}
-                    onChange={(e) => setSelectedClass(e.target.value)}
-                    className="bg-white border border-gray-300 rounded-md shadow-sm px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  >
-                    {classes.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+              <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-rose-light">
+                <SectionHeader
+                  eyebrow="Modelo multiclase · uno-contra-el-resto"
+                  title="Selecciona la clase a analizar"
+                  description={<>Tu modelo tiene <b>{classes.length} clases</b>. Cada clase se evalúa <b>frente al resto</b> (one-vs-rest); las tablas y gráficos de abajo muestran la clase seleccionada.</>}
+                />
+
+                {/* Selector de clase (pills) */}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {classes.map((c) => (
+                    <button
+                      key={c}
+                      onClick={() => setSelectedClass(c)}
+                      className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                        activeClass === c
+                          ? 'bg-burgundy text-white border-burgundy'
+                          : 'bg-white text-ink-80 border-rose-light hover:border-burgundy'
+                      }`}
+                    >
+                      Clase: {c}
+                    </button>
+                  ))}
                 </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  Modelo <b>multiclase</b> ({classes.length} clases): cada clase se evalúa frente al resto.
-                  Las tablas y gráficos muestran la clase <b>{activeClass}</b>.
-                </p>
+
+                {/* Resumen global por atributo */}
                 {Array.isArray(results?.fairness_overall) && results.fairness_overall.length > 0 && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                    <span className="font-semibold text-gray-800">Resumen global (inequidad en alguna clase):</span>
-                    {results.fairness_overall.map((row: any, i: number) => {
-                      const attr = row['Atributo'] ?? row['attribute_name'];
-                      const verdict = row['Conclusión Equidad'] ?? row['fairness_conclusion'];
-                      const unfair = verdict === 'Unfair' || verdict === 'No Equitativo';
-                      return (
-                        <span
-                          key={i}
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${unfair ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}
-                        >
-                          {attr}: {unfair ? 'No Equitativo' : 'Equitativo'}
-                        </span>
-                      );
-                    })}
+                  <div className="mt-5 pt-4 border-t border-line">
+                    <p className="font-mono text-[11px] uppercase tracking-wider text-burgundy mb-2">
+                      Resumen global (todas las clases)
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {results.fairness_overall.map((row: any, i: number) => {
+                        const attr = row['Atributo'] ?? row['attribute_name'];
+                        const verdict = row['Conclusión Equidad'] ?? row['fairness_conclusion'];
+                        const unfair = verdict === 'Unfair' || verdict === 'No Equitativo';
+                        return (
+                          <span
+                            key={i}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border ${
+                              unfair
+                                ? 'bg-red-50 text-red-700 border-red-200'
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                            }`}
+                          >
+                            {attr}: {unfair ? 'No Equitativo' : 'Equitativo'}
+                          </span>
+                        );
+                      })}
+                    </div>
+                    <p className="text-xs text-ink-60 mt-2">
+                      Un atributo es <b>No Equitativo</b> si lo es en <b>al menos una</b> de las {classes.length} clases.
+                    </p>
                   </div>
                 )}
               </div>
