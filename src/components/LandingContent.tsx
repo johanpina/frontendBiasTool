@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, FileText, Flag, Users, Lock, ArrowRight, Globe } from 'lucide-react';
+import { Target, FileText, Flag, Users, Lock, ArrowRight, Globe, Check } from 'lucide-react';
 import { trackToolStart, registerToolUser } from '../lib/analytics';
 
 interface LandingContentProps {
@@ -99,52 +99,19 @@ const ORIGENES = [
   'Organización de la sociedad civil',
   'Persona independiente',
 ];
-const TIPOS = [
-  'Ciencia de datos / IA',
-  'Desarrollo / Ingeniería',
-  'Dirección / jefatura',
-  'Investigación',
-  'Estudiante',
-  'Otro',
-];
-
-const PillGroup: React.FC<{ label: string; options: string[]; value: string; onChange: (v: string) => void }> =
-  ({ label, options, value, onChange }) => (
-  <div>
-    <label className="block text-sm font-medium text-ink-80 mb-1.5">{label}</label>
-    <div className="flex flex-wrap gap-2">
-      {options.map((o) => (
-        <button
-          key={o}
-          type="button"
-          onClick={() => onChange(value === o ? '' : o)}
-          className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
-            value === o
-              ? 'bg-burgundy text-white border-burgundy'
-              : 'bg-white text-ink-80 border-rose-light hover:border-burgundy'
-          }`}
-        >
-          {o}
-        </button>
-      ))}
-    </div>
-  </div>
-);
-
 export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
   const [email, setEmail] = useState('');
   const [origen, setOrigen] = useState('');
-  const [tipo, setTipo] = useState('');
   const [consent, setConsent] = useState(false);
   const [starting, setStarting] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStarting(true);
-    // El registro a Supabase se envía SOLO si la persona acepta; si no, igual entra.
+    // Igual que en la EIA: el correo se registra en Supabase SOLO si la persona
+    // marca la casilla; si no, entra igual y no queda registro de su uso.
     if (consent) {
-      const origin = [origen, tipo].filter(Boolean).join(' · ') || undefined;
-      registerToolUser(email.trim().toLowerCase(), origin);
+      registerToolUser(email.trim().toLowerCase(), origen || undefined);
     }
     trackToolStart();
     onStart();
@@ -248,11 +215,12 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-ink-80 mb-1.5">
-                Correo electrónico (opcional)
+                Correo electrónico
               </label>
               <input
                 type="email"
                 id="email"
+                required={consent}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nombre@ejemplo.com"
@@ -260,20 +228,57 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
               />
             </div>
 
-            <PillGroup label="¿Desde dónde participas?" options={ORIGENES} value={origen} onChange={setOrigen} />
-            <PillGroup label="Tipo de usuario" options={TIPOS} value={tipo} onChange={setTipo} />
+            <div>
+              <span className="block text-sm font-medium text-ink-80 mb-2">¿Desde dónde participas?</span>
+              <div className="flex flex-col gap-1.5">
+                {ORIGENES.map((op) => {
+                  const sel = origen === op;
+                  return (
+                    <label
+                      key={op}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border-[1.5px] cursor-pointer text-[13px] text-ink-80 transition-colors ${
+                        sel ? 'border-burgundy bg-indigo-50' : 'border-rose-light bg-white hover:border-burgundy'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="origen"
+                        value={op}
+                        checked={sel}
+                        onChange={() => setOrigen(op)}
+                        className="sr-only"
+                      />
+                      <span
+                        aria-hidden
+                        className={`w-4 h-4 rounded-full border-[1.5px] flex items-center justify-center shrink-0 ${
+                          sel ? 'border-burgundy bg-burgundy' : 'border-ink-40 bg-white'
+                        }`}
+                      >
+                        {sel && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                      {op}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
 
-            <label className="flex items-start gap-2.5 text-sm text-ink-60 cursor-pointer">
+            <label className="flex items-start gap-2.5 text-[12.5px] text-ink-60 leading-normal cursor-pointer">
               <input
                 type="checkbox"
                 checked={consent}
                 onChange={(e) => setConsent(e.target.checked)}
-                className="mt-0.5 shrink-0"
+                className="sr-only"
               />
-              <span>
-                Acepto registrar mi participación (correo, institución y rol) para ayudar a mejorar la
-                herramienta. Es <b>opcional</b>: puedes iniciar igualmente sin marcarla.
+              <span
+                aria-hidden
+                className={`w-4 h-4 rounded border-[1.5px] flex items-center justify-center shrink-0 mt-px text-white ${
+                  consent ? 'border-burgundy bg-burgundy' : 'border-ink-40 bg-white'
+                }`}
+              >
+                {consent && <Check className="w-2.5 h-2.5" strokeWidth={3} />}
               </span>
+              Acepto recibir novedades del proyecto y de la herramienta.
             </label>
 
             <button
@@ -331,8 +336,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
             <img src="/images/ANID.png" alt="ANID" className="h-16 w-auto" />
             <p className="text-sm text-ink-60 max-w-xl">
-              Desarrollada por el <b>GobLab UAI</b>. Financiada por ANID — Subdirección de Investigación Aplicada /
-              Concurso IDeA I+D 2023, proyecto ID23I10357.
+              Esta herramienta es desarrollada por <b>GobLab UAI</b> con el apoyo de la <b>Agencia Nacional de
+              Investigación y Desarrollo (ANID)</b> — Subdirección de Investigación Aplicada / Concurso IDeA I+D 2023,
+              proyecto <b>ID23I10357</b>, y proyecto <b>Plataforma Algoritmos Públicos: Hacia una IA Generativa
+              Responsable y Ética (ANID IT25I0161)</b>.
             </p>
           </div>
         </div>
@@ -341,7 +348,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
       {/* f) Footer oscuro */}
       <footer className="px-6 sm:px-10 py-4 bg-ink text-white/75 text-xs flex flex-col sm:flex-row items-center justify-between gap-2 mt-auto">
         <span>Desarrollado por GobLab UAI · Escuela de Gobierno, Universidad Adolfo Ibáñez</span>
-        <span className="font-mono">ANID ID23I10357</span>
+        <span className="opacity-75">
+          Proyecto Plataforma Algoritmos Públicos: Hacia una IA Generativa Responsable y Ética ·{' '}
+          <span className="font-mono">ANID ID23I10357 · ANID IT25I0161</span>
+        </span>
       </footer>
     </div>
   );
