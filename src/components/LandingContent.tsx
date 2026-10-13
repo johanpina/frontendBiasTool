@@ -130,7 +130,7 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <a href="#privacidad" className="text-sm text-ink-60 hover:text-burgundy transition-colors">Privacidad</a>
+          <a href="/privacidad" className="text-sm text-ink-60 hover:text-burgundy transition-colors">Privacidad</a>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 border border-rose-light text-burgundy text-xs font-semibold px-3 py-1">
             <Globe className="h-3.5 w-3.5" /> ES
           </span>
@@ -280,6 +280,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
               </span>
               Acepto recibir novedades del proyecto y de la herramienta.
             </label>
+            <p className="!mt-1.5 ml-[26px] text-[11.5px] text-ink-60 leading-normal">
+              Tus datos se procesan solo durante el análisis y no se guardan. Solo registramos tu correo si marcas esta casilla.{' '}
+              <a href="/privacidad" className="text-burgundy font-semibold hover:underline">Cómo tratamos tus datos</a>
+            </p>
 
             <button
               type="submit"
@@ -306,7 +310,7 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
             </p>
           </div>
 
-          <div id="privacidad" className="bg-white border border-rose-light rounded-xl px-5 py-4">
+          <div className="bg-white border border-rose-light rounded-xl px-5 py-4">
             <div className="flex items-center gap-2.5 mb-1.5">
               <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-indigo-50 text-burgundy">
                 <Lock className="h-4 w-4" />
@@ -314,8 +318,14 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
               <h3 className="text-sm font-semibold text-ink-80">Privacidad</h3>
             </div>
             <p className="text-[12.5px] text-ink-60 leading-snug">
-              Los datos que cargas no se almacenan: se procesan y luego se eliminan de nuestros servidores.
+              Los datos que cargas se procesan en nuestros servidores solo para calcular las métricas y no se guardan:
+              se eliminan al terminar el análisis. Si aceptas recibir novedades, tu correo y desde dónde participas se
+              registran únicamente para saber desde dónde se usa la herramienta y enviarte novedades del proyecto, y nunca
+              se comparten con terceros.
             </p>
+            <a href="/privacidad" className="mt-2.5 inline-flex items-center gap-1.5 text-xs font-semibold text-burgundy hover:underline">
+              Leer política completa <ArrowRight className="h-3.5 w-3.5" />
+            </a>
           </div>
 
           <div className="bg-indigo-50 border border-rose-light rounded-xl px-5 py-4">

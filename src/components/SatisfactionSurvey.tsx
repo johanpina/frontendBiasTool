@@ -49,7 +49,6 @@ export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
   const [ease, setEase] = useState(0);
   const [usefulness, setUsefulness] = useState(0);
   const [comment, setComment] = useState('');
-  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
 
@@ -59,7 +58,7 @@ export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
     e.preventDefault();
     if (!canSend) return;
     setSending(true);
-    await submitSatisfactionSurvey({ satisfaction, ease, usefulness, comment: comment.trim(), email: email.trim().toLowerCase() });
+    await submitSatisfactionSurvey({ satisfaction, ease, usefulness, comment: comment.trim() });
     setSending(false);
     setSent(true);
     onSubmitted?.();
@@ -80,7 +79,7 @@ export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
         <MessageSquareHeart className="h-5 w-5 text-indigo-600" />
         <h3 className="text-lg font-semibold text-gray-900">Encuesta de satisfacción</h3>
       </div>
-      <p className="text-sm text-gray-600 mb-4">Tu opinión es anónima (salvo que dejes tu correo) y nos ayuda a mejorar.</p>
+      <p className="text-sm text-gray-600 mb-4">Tu opinión nos ayuda a mejorar la herramienta.</p>
       <form onSubmit={handleSubmit}>
         <div className="divide-y divide-gray-100">
           <Stars value={satisfaction} onChange={setSatisfaction} label="Satisfacción general con la herramienta" />
@@ -94,13 +93,12 @@ export const SatisfactionSurvey: React.FC<SatisfactionSurveyProps> = ({
           rows={3}
           className="mt-4 w-full border border-rose-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Correo electrónico (opcional)"
-          className="mt-3 w-full border border-rose-light rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-        />
+        <p className="mt-2 text-[11.5px] text-ink-60 leading-normal">
+          Usamos tus respuestas solo para medir la satisfacción y mejorar la herramienta.{' '}
+          <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-burgundy font-semibold hover:underline">
+            Cómo tratamos tus datos
+          </a>
+        </p>
         <div className="flex items-center justify-between gap-3 mt-4">
           {onSkip ? (
             <button

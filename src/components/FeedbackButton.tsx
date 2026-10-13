@@ -12,7 +12,6 @@ export const FeedbackButton: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState('Comentario general');
   const [message, setMessage] = useState('');
-  const [email, setEmail] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -22,7 +21,6 @@ export const FeedbackButton: React.FC = () => {
     setTimeout(() => {
       setSent(false);
       setMessage('');
-      setEmail('');
       setType('Comentario general');
     }, 250);
   };
@@ -31,7 +29,7 @@ export const FeedbackButton: React.FC = () => {
     e.preventDefault();
     if (!message.trim()) return;
     setSending(true);
-    await submitFeedback({ type, message, email: email.trim().toLowerCase() });
+    await submitFeedback({ type, message });
     setSending(false);
     setSent(true);
   };
@@ -85,8 +83,7 @@ export const FeedbackButton: React.FC = () => {
             ) : (
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <p className="text-sm text-ink-60">
-                  Cuéntanos qué te pareció la herramienta o repórtanos un error. Tu opinión es anónima
-                  (salvo que dejes tu correo).
+                  Cuéntanos qué te pareció la herramienta o repórtanos un error.
                 </p>
                 <div>
                   <label className="block text-sm font-medium text-ink-80 mb-1.5">Tipo</label>
@@ -110,16 +107,12 @@ export const FeedbackButton: React.FC = () => {
                     className="w-full border border-line rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-burgundy"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-ink-80 mb-1.5">Correo electrónico (opcional)</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nombre@ejemplo.com"
-                    className="w-full border border-line rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-burgundy"
-                  />
-                </div>
+                <p className="text-[11.5px] text-ink-60 leading-normal">
+                  Usamos tu comentario solo para entender y resolver lo que reportas.{' '}
+                  <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="text-burgundy font-semibold hover:underline">
+                    Cómo tratamos tus datos
+                  </a>
+                </p>
                 <div className="flex justify-end">
                   <button
                     type="submit"

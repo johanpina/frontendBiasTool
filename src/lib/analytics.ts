@@ -13,6 +13,10 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID as string | undefined;
 
+// Correo de la persona SOLO si marcó la casilla de novedades en la portada.
+// Sin consentimiento, el feedback y la encuesta se guardan como anónimos.
+let consentedEmail: string | undefined;
+
 // Inicializa Google Analytics 4 desde el código (no desde el HTML), porque
 // import.meta.env sí toma las variables de entorno de Vercel en el build,
 // a diferencia de la sustitución %VITE_*% en index.html.
@@ -76,6 +80,7 @@ export function trackToolExport(format: string = "csv") {
  * el genérico. Falla en silencio para no bloquear el ingreso a la herramienta.
  */
 export async function registerToolUser(email: string, origin?: string) {
+  consentedEmail = email || undefined;
   gtag("event", "tool_register", { tool_name: TOOL_NAME });
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
   try {
@@ -101,7 +106,6 @@ export async function registerToolUser(email: string, origin?: string) {
 export interface FeedbackPayload {
   type: string;        // "Comentario general" | "Reporte de error"
   message: string;     // texto del comentario
-  email?: string;      // correo opcional
   pantalla?: string;   // pantalla desde donde se envía
 }
 
@@ -130,7 +134,7 @@ export async function submitFeedback(payload: FeedbackPayload): Promise<boolean>
         tool: TOOL_NAME,
         feedback_type: payload.type,
         description: payload.message.trim(),
-        email: payload.email || ANON_EMAIL,
+        email: consentedEmail || ANON_EMAIL,
         pantalla: payload.pantalla || "flotante",
       }),
     });
@@ -145,7 +149,6 @@ export interface SatisfactionPayload {
   ease: number;           // 1..5 (facilidad de uso)
   usefulness: number;     // 1..5 (utilidad)
   comment?: string;       // comentario opcional
-  email?: string;         // correo opcional
 }
 
 /**
@@ -185,7 +188,7 @@ export async function submitSatisfactionSurvey(payload: SatisfactionPayload): Pr
         tool: TOOL_NAME,
         feedback_type: "Comentario general",
         description,
-        email: payload.email || ANON_EMAIL,
+        email: consentedEmail || ANON_EMAIL,
         pantalla: "encuesta",
       }),
     });
