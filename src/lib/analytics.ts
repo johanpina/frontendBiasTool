@@ -31,8 +31,12 @@ export function initGA(): void {
   document.head.appendChild(s);
 
   window.dataLayer = window.dataLayer || [];
-  function gtagFn(...args: unknown[]) {
-    window.dataLayer!.push(args);
+  // gtag.js solo procesa objetos `arguments`: si se empuja un array (rest
+  // params), ignora los comandos y no se envía ningún dato a GA4.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  function gtagFn(..._args: unknown[]) {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments);
   }
   window.gtag = gtagFn as typeof window.gtag;
   gtagFn("js", new Date());
