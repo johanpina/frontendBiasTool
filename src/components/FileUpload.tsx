@@ -23,17 +23,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({ file, loading, onFileUpl
                     <p className="mb-2 text-sm text-ink-80">
                       Archivo cargado: <span className="font-semibold">{file.name}</span>
                     </p>
-                    <p className="text-xs text-ink-60">
-                      Haz click para cambiar el archivo
+                    <p className="text-sm font-semibold text-burgundy underline underline-offset-2">
+                      Haz clic para cambiar el archivo
                     </p>
                   </>
                 ) : (
                   <>
                     <Upload className="w-10 h-10 mb-3 text-rose" />
                     <p className="mb-2 text-sm text-ink-60">
-                      <span className="font-semibold text-ink-80">Click para cargar</span> o arrastra y suelta
+                      <span className="font-semibold text-ink-80">Haz clic para cargar</span> o arrastra el archivo aquí
                     </p>
-                    <p className="text-xs text-ink-40">CSV (MAX. 10MB)</p>
+                    <p className="text-xs text-ink-60">Archivo .csv, máximo 10 MB</p>
                   </>
                 )}
               </>

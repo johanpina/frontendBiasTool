@@ -93,11 +93,11 @@ export const EdaPanel: React.FC<Props> = ({ eda, loading, error }) => {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <BarChart3 className="text-indigo-600" size={24} />
-          <h2 className="text-2xl font-bold text-gray-900">Análisis Exploratorio de los Datos</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Paso 2 · Explora tus datos</h2>
         </div>
         <p className="text-gray-600">
-          Antes de medir sesgos, explora la calidad, el balance y las relaciones de tus datos.
-          Las alertas y vistas destacan posibles <b>desbalances</b> y <b>proxies</b> que pueden esconder discriminación.
+          Antes de medir sesgos, revisa si tus datos están completos y si todos los grupos tienen suficientes casos.
+          Las alertas te muestran qué revisar antes de seguir.
         </p>
       </div>
 

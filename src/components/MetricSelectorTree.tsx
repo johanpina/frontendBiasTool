@@ -139,7 +139,7 @@ const TREE: Record<string, Node> = {
   },
   interv: {
     type: 'q',
-    text: 'Cuando el modelo predice “positivo”, ¿qué ocurre con esa persona?',
+    text: 'Cuando el modelo marca a una persona como “positiva”, ¿qué le ocurre?',
     help: 'Esta es la pregunta clave: define si tu contexto es punitivo o asistencial, y con ello qué métricas debes vigilar.',
     options: [
       { label: 'Recibe una acción que puede perjudicarla (punitiva)', help: 'Ej.: vigilancia, negar un crédito, detener.', go: 'punitiva' },

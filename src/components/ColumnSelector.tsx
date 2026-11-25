@@ -26,9 +26,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Columna de Predicciones
+          <label className="block text-sm font-medium text-gray-700">
+            Predicción del modelo <span className="text-burgundy">*</span>
           </label>
+          <p className="text-xs text-gray-500 mb-2">Lo que predijo el modelo.</p>
           <select
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             value={columnSelection.predictions}
@@ -42,9 +43,10 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Columna de Valores Reales
+          <label className="block text-sm font-medium text-gray-700">
+            Valor real <span className="text-burgundy">*</span>
           </label>
+          <p className="text-xs text-gray-500 mb-2">Lo que realmente ocurrió.</p>
           <select
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             value={columnSelection.actual}
@@ -59,16 +61,21 @@ export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
       </div>
 
       <div className="mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <label className="block text-lg font-medium text-gray-900">
-            Selecciona las columnas que quieres analizar
-          </label>
+        <div className="flex justify-between items-start gap-4 mb-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Variables protegidas <span className="text-burgundy">*</span>
+            </label>
+            <p className="text-xs text-gray-500">
+              Características de las personas que quieres comparar (ej.: sexo, edad). No incluyas identificadores como RUT o ID.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onSelectAllProtected}
-            className="text-sm text-indigo-600 hover:text-indigo-500"
+            className="text-sm text-indigo-600 hover:text-indigo-500 whitespace-nowrap"
           >
-            Seleccionar todas
+            Seleccionar las sugeridas
           </button>
         </div>
 

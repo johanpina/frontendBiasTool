@@ -14,7 +14,7 @@ export const InfoAlert: React.FC = () => {
             Privacidad:
           </h4>
           <div className="mt-2 text-sm text-ink-80">
-            <p>La herramienta no almacena ni transmite tu información. Puedes cambiar el archivo en cualquier momento haciendo clic en el área de carga.</p>
+            <p>Tu archivo se envía a nuestro servidor solo para calcular los resultados. No lo guardamos: se elimina al terminar el análisis.</p>
             
           </div>
         </div>

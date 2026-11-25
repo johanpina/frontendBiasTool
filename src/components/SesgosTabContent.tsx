@@ -3,6 +3,7 @@ import React from 'react';
 import { AbsolutePlotter } from './bias-analysis/AbsolutePlotter';
 import { DataTable } from './DataTable';
 import { METRIC_TRANSLATIONS } from '../constants';
+import { fmtInt } from '../lib/format';
 
 interface SesgosTabContentProps {
   results: any;
@@ -18,8 +19,20 @@ export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BAS
     );
   }
 
+  // El total de casos es igual en todas las filas: se muestra una vez, no como columna.
+  const groupCounts: any[] = results.tables.group_counts || [];
+  const totalCasos = groupCounts[0]?.['Total Entidades'] ?? groupCounts[0]?.total_entities;
+  const groupCountsSinTotal = groupCounts.map((row: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(row).filter(([k]) => k !== 'Total Entidades' && k !== 'total_entities'))
+  );
+
   return (
     <div className="space-y-8">
+      {totalCasos != null && (
+        <p className="text-sm text-ink-80">
+          Total de casos en el archivo: <b>{fmtInt(totalCasos)}</b>
+        </p>
+      )}
       <AbsolutePlotter 
         groupMetrics={results.tables.group_metrics_for_plotting}
         protectedAttributes={results.metadata.protected_attributes}
@@ -27,7 +40,7 @@ export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BAS
       />
       <DataTable
         title="Total de instancias por subgrupo"
-        data={results.tables.group_counts}
+        data={groupCountsSinTotal}
         translateHeader={(h) => METRIC_TRANSLATIONS[h] || h}
         formatNumber={(v) => String(v)}
       />
@@ -44,7 +57,6 @@ export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BAS
           <li><b>PP (Positivos Predichos)</b> y <b>PN (Negativos Predichos):</b> Totales de predicciones positivas y negativas hechas por el modelo para ese subgrupo.</li>
           <li><b>Etiqueta positiva / negativa del grupo:</b> Cantidad real de casos positivos y negativos dentro del subgrupo.</li>
           <li><b>Tamaño de grupo:</b> Total de instancias pertenecientes a ese subgrupo.</li>
-          <li><b>Total de Instancias:</b> Total general de casos dentro de la variable protegida.</li>
         </ul>
         <p className="mb-2 font-semibold">¿Por qué es importante esta tabla?</p>
         <p className="mb-2">

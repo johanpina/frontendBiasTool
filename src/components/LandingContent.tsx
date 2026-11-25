@@ -70,15 +70,15 @@ const WHY = [
     icon: FileText,
     title: '¿En qué consiste?',
     items: [
-      'Mide tasas de disparidad con la metodología de Aequitas (Ghani, 2019).',
-      'Cuatro métricas de error: FPR, FNR, FOR y FDR, por cada subgrupo.',
+      'Compara las tasas de error del modelo entre grupos. Usa la metodología de Aequitas (Ghani, 2019); en modelos multiclase, compara cada clase contra las demás.',
+      'Calcula cuatro tasas de error para cada grupo: falsos positivos (FPR), falsos negativos (FNR), falsas omisiones (FOR) y falsos descubrimientos (FDR).',
     ],
   },
   {
     icon: Flag,
     title: '¿Qué obtienes?',
     items: [
-      'Un veredicto de equidad por atributo, con gráficos y tablas claras.',
+      'Un veredicto por cada variable protegida (equitativo o no equitativo), con la explicación de qué grupo resulta más afectado.',
       'Un informe PDF descargable con todos tus resultados.',
     ],
   },
@@ -86,9 +86,10 @@ const WHY = [
 
 const STEPS = [
   'Carga tus datos',
-  'Configura y elige la métrica',
-  'Analiza el modelo',
-  'Descarga tu informe',
+  'Explora tus datos',
+  'Configura el análisis',
+  'Revisa los resultados',
+  'Descarga el informe',
 ];
 
 // Opciones de registro (mismas de la EIA para "origen"), bajo el correo.
@@ -209,13 +210,13 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
         <div className="bg-white border border-rose-light rounded-2xl px-7 py-6">
           <h2 className="font-display text-2xl font-semibold text-ink mb-1">Comienza tu evaluación</h2>
           <p className="text-sm text-ink-60 mb-5">
-            Necesitas un archivo <b>.csv</b> o <b>.xlsx</b> con las predicciones del modelo, los valores reales y
-            las variables protegidas.
+            Necesitas un archivo <b>.csv</b> (máximo 10 MB) con una fila por caso y estas columnas: predicción del
+            modelo, valor real y variables protegidas.
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-ink-80 mb-1.5">
-                Correo electrónico
+                Correo electrónico (opcional)
               </label>
               <input
                 type="email"
@@ -318,8 +319,8 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
               <h3 className="text-sm font-semibold text-ink-80">Privacidad</h3>
             </div>
             <p className="text-[12.5px] text-ink-60 leading-snug">
-              Los datos que cargas se procesan en nuestros servidores solo para calcular las métricas y no se guardan:
-              se eliminan al terminar el análisis. Si aceptas recibir novedades, tu correo y desde dónde participas se
+              Tu archivo se envía a nuestro servidor solo para calcular los resultados. No lo guardamos: se elimina al
+              terminar el análisis. Si aceptas recibir novedades, tu correo y desde dónde participas se
               registran únicamente para saber desde dónde se usa la herramienta y enviarte novedades del proyecto, y nunca
               se comparten con terceros.
             </p>

@@ -32,18 +32,8 @@ export const AnalysisConfiguration: React.FC<AnalysisConfigurationProps> = ({
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm mb-8 space-y-8">
       <div>
-        <h2 className="text-xl font-semibold mb-4">Paso 1: Configura tu Dataset</h2>
-        <div className="mb-4 text-gray-700">
-          <p>Asocia correctamente cada columna del archivo con su función en el análisis.</p>
-          <ul className="list-disc pl-6 mb-2">
-            <li><b>Columna de Predicciones:</b> selecciona la columna que contiene las predicciones generadas por tu modelo.</li>
-            <li><b>Columna de Valores Reales:</b> selecciona la columna que contiene las etiquetas reales u observadas.</li>
-            <li><b>Selecciona solo las variables protegidas: </b><br/>
-              <span className="ml-2">- En el campo “Selecciona las columnas que quieres analizar”, marca únicamente las variables protegidas que deseas evaluar por sesgos (por ejemplo: género, edad, situación socioeconómica).</span><br/>
-              <span className="ml-2">- No incluyas columnas de identificadores como ID, entity_id u otras variables que no representen atributos demográficos, ya que pueden interferir con los resultados del análisis.</span>
-            </li>
-          </ul>
-        </div>
+        <h2 className="text-xl font-semibold mb-1">3a. Columnas</h2>
+        <p className="mb-4 text-gray-700">Indica qué columna cumple cada función.</p>
         <DataPreview previewData={previewData} />
         <ColumnSelector
           columnSelection={columnSelection}
@@ -57,17 +47,15 @@ export const AnalysisConfiguration: React.FC<AnalysisConfigurationProps> = ({
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-1">Paso 2: ¿Qué métrica debo mirar? (Opcional)</h2>
+        <h2 className="text-xl font-semibold mb-1">3b. ¿Qué error es más grave en tu caso? (recomendado)</h2>
         <p className="text-gray-700 mb-4">
-          No todas las métricas importan por igual: depende de qué hace tu modelo. Responde estas preguntas y te
-          diremos, en palabras simples, <b>en qué métrica enfocarte</b> y por qué. Está basado en el
-          <b> árbol de decisión de Aequitas</b>.
+          Responde 2 o 3 preguntas y te diremos qué tasa de error priorizar. Basado en el árbol de decisión de Aequitas.
         </p>
         <MetricSelectorTree onComplete={onWizardComplete} />
       </div>
 
       <div>
-        <h2 className="text-xl font-semibold mb-4">Paso 3: ¿Cuánta diferencia entre grupos aceptas?</h2>
+        <h2 className="text-xl font-semibold mb-4">3c. ¿Cuánta diferencia entre grupos aceptas?</h2>
         <p className="text-gray-700 mb-2">
           Comparamos cada grupo con un <b>grupo de referencia</b>. Si un grupo se comporta igual que la referencia,
           su valor es <b>1.00</b>. La tolerancia marca <b>hasta dónde</b> esa diferencia se considera aceptable

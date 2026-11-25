@@ -185,18 +185,18 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             </button>
 
             <SectionHeader
-              eyebrow="Resultados · Análisis del modelo"
-              title="Resultados de tu evaluación"
-              description="Explora el análisis de sesgos y el de equidad. Al final podrás descargar el informe en PDF."
+              eyebrow="Paso 4"
+              title="Revisa los resultados"
+              description="Primero el veredicto por variable protegida; luego el detalle por grupo. Al final podrás descargar el informe en PDF."
               className="mb-6"
             />
 
             {isMulticlass && (
               <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-rose-light">
                 <SectionHeader
-                  eyebrow="Modelo multiclase · uno-contra-el-resto"
-                  title="Selecciona la clase a analizar"
-                  description={<>Tu modelo tiene <b>{classes.length} clases</b>. Cada clase se evalúa <b>frente al resto</b> (one-vs-rest); las tablas y gráficos de abajo muestran la clase seleccionada.</>}
+                  eyebrow={`Modelo multiclase (${classes.length} clases)`}
+                  title="Estás viendo la clase:"
+                  description={<>Cada clase se compara contra {classes.length === 3 ? 'las otras dos juntas' : 'las demás juntas'}. Las tablas y gráficos de abajo muestran la clase seleccionada.</>}
                 />
 
                 {/* Selector de clase (pills) */}
@@ -211,7 +211,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                           : 'bg-white text-ink-80 border-rose-light hover:border-burgundy'
                       }`}
                     >
-                      Clase: {c}
+                      {c}
                     </button>
                   ))}
                 </div>
@@ -220,7 +220,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                 {Array.isArray(results?.fairness_overall) && results.fairness_overall.length > 0 && (
                   <div className="mt-5 pt-4 border-t border-line">
                     <p className="font-mono text-[11px] uppercase tracking-wider text-burgundy mb-2">
-                      Resumen global (todas las clases)
+                      Veredicto considerando las {classes.length} clases
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {results.fairness_overall.map((row: any, i: number) => {
@@ -236,13 +236,13 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                                 : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             }`}
                           >
-                            {attr}: {unfair ? 'No Equitativo' : 'Equitativo'}
+                            {attr}: {unfair ? 'No equitativo' : 'Equitativo'}
                           </span>
                         );
                       })}
                     </div>
                     <p className="text-xs text-ink-60 mt-2">
-                      Un atributo es <b>No Equitativo</b> si lo es en <b>al menos una</b> de las {classes.length} clases.
+                      Una variable es <b>no equitativa</b> si lo es en <b>al menos una</b> clase.
                     </p>
                   </div>
                 )}
@@ -252,16 +252,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             <Tabs
               tabs={[
                 {
-                  name: 'Análisis de Sesgos',
-                  content: (
-                    <SesgosTabContent
-                      results={effectiveResults}
-                      BASE_API_URL={BASE_API_URL}
-                    />
-                  ),
-                },
-                {
-                  name: 'Análisis de Equidad',
+                  name: 'Veredicto y resumen',
                   content: (
                     <EquidadTabContent
                       results={effectiveResults}
@@ -271,18 +262,31 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                     />
                   ),
                 },
+                {
+                  name: 'Detalle por grupo',
+                  content: (
+                    <SesgosTabContent
+                      results={effectiveResults}
+                      BASE_API_URL={BASE_API_URL}
+                    />
+                  ),
+                },
               ]}
             />
 
             <div className="mt-12 space-y-6">
               <SectionHeader
-                eyebrow="Paso final · Informe"
-                title="Descarga y evalúa"
+                eyebrow="Paso 5"
+                title="Descarga el informe"
               />
               <div className="bg-indigo-50 border border-rose-light rounded-2xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="font-display text-lg font-semibold text-ink">Tu informe está listo</h3>
-                  <p className="text-sm text-ink-60">Incluye los metadatos del análisis, las tablas de disparidad y los gráficos de equidad.</p>
+                  <h3 className="font-display text-lg font-semibold text-ink">El PDF incluye:</h3>
+                  <ul className="list-disc pl-5 text-sm text-ink-60">
+                    <li>La exploración de tus datos y la configuración usada.</li>
+                    <li>El veredicto por variable protegida y el grupo de referencia.</li>
+                    <li>Las tablas de disparidad y los gráficos.</li>
+                  </ul>
                 </div>
                 <button
                   onClick={onRequestDownload}
@@ -338,9 +342,9 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                 {eda && (
                   <div className="mt-10 mb-2 border-t border-line pt-8">
                     <SectionHeader
-                      eyebrow="Paso 02 · Configuración"
-                      title="Configuración del análisis"
-                      description="Con el panorama de tus datos claro, selecciona las columnas y la tolerancia para medir la equidad."
+                      eyebrow="Paso 3"
+                      title="Configura el análisis"
+                      description="Define cómo se medirá la equidad de tu modelo. Los campos con * son obligatorios."
                     />
                   </div>
                 )}
@@ -352,8 +356,13 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                     setColumnSelection(prev => ({ ...prev, [field]: value }))
                   }
                   onSelectAllProtected={() => {
+                    // Solo las columnas que la exploración (paso 2) sugiere como variable protegida.
+                    const suggested = new Set(
+                      (eda?.columns || []).filter(c => c.role_hint === 'protected').map(c => c.name)
+                    );
                     const availableColumns = previewData.columns.filter(
-                      col => col !== columnSelection.predictions && col !== columnSelection.actual
+                      col => col !== columnSelection.predictions && col !== columnSelection.actual &&
+                        (suggested.size === 0 || suggested.has(col))
                     );
                     setColumnSelection(prev => ({ ...prev, protected: availableColumns }));
                   }}

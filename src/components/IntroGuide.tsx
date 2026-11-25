@@ -11,19 +11,23 @@ export const IntroGuide: React.FC = () => {
       icon: <Brain className="h-5 w-5 text-burgundy" />,
       bg: 'bg-rose-tint',
       titulo: 'Predicciones del modelo',
-      desc: 'Lo que tu modelo predijo para cada caso (0/1, o varias clases).',
+      desc: 'Lo que el modelo predijo para cada caso.',
+      detalle: [
+        'Binario: 0 y 1 (1 = el caso que el modelo marca).',
+        'Multiclase: el nombre de cada clase (ej.: Alto, Medio, Bajo).',
+      ],
     },
     {
       icon: <CheckCircle2 className="h-5 w-5 text-[#2F6B4F]" />,
       bg: 'bg-[#E7F0EA]',
       titulo: 'Valores reales',
-      desc: 'Lo que realmente ocurrió: las etiquetas verdaderas a comparar.',
+      desc: 'Lo que realmente ocurrió en cada caso. Debe usar los mismos valores que la columna de predicciones.',
     },
     {
       icon: <Users className="h-5 w-5 text-[#A2611F]" />,
       bg: 'bg-[#F6EADB]',
       titulo: 'Variables protegidas',
-      desc: 'Atributos como etnia, sexo o edad sobre los que evaluar sesgos.',
+      desc: 'Características de las personas, como sexo, edad o pueblo originario. Deben ser categorías (ej.: edad en tramos, no en años).',
     },
   ];
 
@@ -44,10 +48,10 @@ export const IntroGuide: React.FC = () => {
   return (
     <div className="mb-8 space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Analiza el sesgo de tu modelo en 3 pasos</h2>
+        <p className="font-mono text-[11px] uppercase tracking-wider text-burgundy mb-1">Paso 1</p>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Carga tus datos</h2>
         <p className="text-gray-600">
-          Carga un archivo <b>.csv</b> con las predicciones de tu modelo, los valores reales y las
-          variables protegidas. La herramienta mide si tu modelo comete sus errores de forma
+          Sube el archivo con las predicciones de tu modelo para revisar si comete sus errores de forma
           <b> desigual entre grupos</b>.
         </p>
       </div>
@@ -59,6 +63,11 @@ export const IntroGuide: React.FC = () => {
             <div className={`inline-flex p-2 rounded-lg ${c.bg} mb-2`}>{c.icon}</div>
             <h3 className="font-semibold text-gray-900">{c.titulo}</h3>
             <p className="text-sm text-gray-600 mt-1">{c.desc}</p>
+            {'detalle' in c && c.detalle && (
+              <ul className="mt-1.5 space-y-0.5 text-sm text-gray-600">
+                {c.detalle.map((d) => <li key={d}>{d}</li>)}
+              </ul>
+            )}
           </div>
         ))}
       </div>
@@ -110,10 +119,13 @@ export const IntroGuide: React.FC = () => {
           discriminación arbitraria (<a className="underline" href="https://www.bcn.cl/leychile/navegar?i=1042092" target="_blank" rel="noreferrer">ver ley</a>).
           También puedes evaluar variables <i>proxy</i> asociadas a ellas.
         </p>
-        <p className="text-burgundy/90">
-          Requisitos: cada columna debe estar claramente identificada, las variables protegidas deben ser
-          <b> categóricas</b> y sin valores faltantes en las columnas clave.
-        </p>
+        <p className="text-burgundy/90 font-semibold mt-2">Antes de cargar, revisa que:</p>
+        <ul className="list-disc pl-5 text-burgundy/90">
+          <li>La primera fila tenga los nombres de las columnas.</li>
+          <li>Cada fila sea un caso.</li>
+          <li>No haya celdas vacías en predicción, valor real ni variables protegidas.</li>
+          <li>Las variables protegidas sean categorías.</li>
+        </ul>
       </div>
     </div>
   );

@@ -3,6 +3,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { PlotVisualization } from '../PlotVisualization';
 import { METRIC_TRANSLATIONS } from '../../constants';
 
+const DISPARITY_TITLES: Record<string, string> = {
+  fpr_disparity: 'Disparidad en la tasa de falsos positivos (FPR)',
+  fnr_disparity: 'Disparidad en la tasa de falsos negativos (FNR)',
+  for_disparity: 'Disparidad en la tasa de falsas omisiones (FOR)',
+  fdr_disparity: 'Disparidad en la tasa de falsos descubrimientos (FDR)',
+};
+
 interface DisparityPlotterProps {
   biasMetrics: any[];
   protectedAttributes: string[];
@@ -79,7 +86,7 @@ export const DisparityPlotter: React.FC<DisparityPlotterProps> = ({ biasMetrics,
           {loading ? 'Actualizando...' : 'Actualizar Gráfico'}
         </button>
       </div>
-      <PlotVisualization title={`Disparidad para ${METRIC_TRANSLATIONS[metric] || metric.replace('_disparity','').toUpperCase()}`} plotData={plotData} />
+      <PlotVisualization title={DISPARITY_TITLES[metric] || METRIC_TRANSLATIONS[metric] || metric.replace('_disparity','').toUpperCase()} plotData={plotData} />
     </div>
   );
 };

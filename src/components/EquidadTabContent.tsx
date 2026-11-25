@@ -14,6 +14,7 @@ import { SectionHeader } from './SectionHeader';
 import { referenceByAttribute, refMethodLabel } from '../lib/referenceInfo';
 
 import { METRIC_TRANSLATIONS } from '../constants';
+import { fmtInt, fmtPct, fmtTimes } from '../lib/format';
 
 
 
@@ -134,6 +135,18 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
     ['fpr_disparity', 'FPR'], ['fnr_disparity', 'FNR'],
     ['for_disparity', 'FOR'], ['fdr_disparity', 'FDR'],
   ];
+  // Clase evaluada: en multiclase la seleccionada; en binario, "positivos".
+  const pos: string = results?.metadata?.selected_class ?? 'positivos';
+  // Frase en lenguaje simple de qué mide cada tasa para un grupo.
+  const describeRate = (m: string, pct: string) => {
+    switch (m) {
+      case 'fnr': return `el modelo no detecta al ${pct} de los casos que sí eran ${pos}`;
+      case 'fpr': return `el modelo marca por error al ${pct} de los casos que no eran ${pos}`;
+      case 'for': return `el ${pct} de los casos que el modelo descartó sí eran ${pos}`;
+      case 'fdr': return `el ${pct} de los casos que el modelo marcó como ${pos} no lo eran`;
+      default: return `${m.toUpperCase()} = ${pct}`;
+    }
+  };
   const buildDiagnostics = () => {
     const bias = results?.tables?.bias_metrics || [];
     const lower = 1 / tau, upper = tau;
@@ -142,7 +155,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
       const a = r.attribute_name;
       if (!byAttr[a]) byAttr[a] = { offenders: [], insufficient: [] };
       if (r.insufficient_sample) {
-        byAttr[a].insufficient.push({ group: r.attribute_value, n: r.group_size });
+        byAttr[a].insufficient.push({ group: r.attribute_value, n: r.group_size, npos: r.group_label_pos });
         return;
       }
       if (r.fairness_conclusion === 'Unfair') {
@@ -152,7 +165,12 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
           if (v == null || Number.isNaN(v)) return;
           if (v < lower || v > upper) {
             const dev = Math.max(v, 1 / v);
-            if (!worst || dev > worst.dev) worst = { label, val: v, dev };
+            if (!worst || dev > worst.dev) {
+              const m = k.replace('_disparity', '');
+              const refName = r[`${m}_ref_group_value`];
+              const refRow = bias.find((x: any) => x.attribute_name === a && String(x.attribute_value) === String(refName));
+              worst = { label, metric: m, val: v, dev, rate: r[m], refName, refRate: refRow?.[m] };
+            }
           }
         });
         byAttr[a].offenders.push({ group: r.attribute_value, n: r.group_size, worst });
@@ -296,9 +314,14 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
               <li>Por construcción, el grupo de referencia tiene asignado el valor <b>1.00</b>.</li>
 
-              <li>Si el valor es mayor a 1, significa que el error o diferencia es mayor en el subgrupo evaluado.</li>
-
-              <li>Si el valor es menor a 1, significa que el grupo de referencia tiene mayor error o menor desempeño.</li>
+              <li>
+                Para las tasas de error (FPR, FNR, FOR, FDR):
+                <ul className="list-[circle] pl-6">
+                  <li><b>Mayor que 1:</b> este grupo tiene más errores que la referencia.</li>
+                  <li><b>Menor que 1:</b> este grupo tiene menos errores que la referencia.</li>
+                </ul>
+                Ej.: 2,00× = el doble de errores; 0,50× = la mitad.
+              </li>
 
               <li>Cuanto más cercano a 1, más similares son los desempeños entre los subgrupos y, por tanto, menor la disparidad, es decir, más equitativo es el desempeño.</li>
 
@@ -411,7 +434,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
                     <p className="font-semibold text-gray-800">
                       {attr}:{' '}
                       {d.offenders.length ? (
-                        <span className="text-red-600">No Equitativo</span>
+                        <span className="text-red-600">No equitativo</span>
                       ) : (
                         <span className="text-green-600">Equitativo</span>
                       )}
@@ -420,9 +443,15 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
                       <ul className="list-disc pl-6 text-sm text-gray-700 mt-1">
                         {d.offenders.map((o: any, i: number) => (
                           <li key={i}>
-                            <b>{o.group}</b> (n={o.n})
+                            <b>{o.group}</b> ({fmtInt(o.n)} casos)
                             {o.worst && (
-                              <> — mayor disparidad en <b>{o.worst.label}</b> = {o.worst.val.toFixed(2)}×</>
+                              <>
+                                : {describeRate(o.worst.metric, fmtPct(o.worst.rate))}
+                                {o.worst.refName ? <>, frente al {fmtPct(o.worst.refRate)} en {o.worst.refName} (referencia)</> : null}.
+                                {Number.isFinite(o.worst.val) && o.worst.val > 0 && (
+                                  <> Es {fmtTimes(o.worst.val >= 1 ? o.worst.val : 1 / o.worst.val)} veces {o.worst.val >= 1 ? 'más' : 'menos'}.</>
+                                )}
+                              </>
                             )}
                           </li>
                         ))}
@@ -430,7 +459,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
                     )}
                     {d.insufficient.length > 0 && (
                       <p className="text-xs text-gray-500 mt-1">
-                        No evaluados por muestra insuficiente: {d.insufficient.map((g: any) => `${g.group} (n=${g.n})`).join(', ')}.
+                        No evaluados por tener pocos casos: {d.insufficient.map((g: any) => `${g.group} (${fmtInt(g.n)} casos${g.npos != null ? `, ${fmtInt(g.npos)} ${pos}` : ''})`).join(', ')}.
                       </p>
                     )}
                   </div>

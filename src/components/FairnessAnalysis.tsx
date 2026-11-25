@@ -67,9 +67,9 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
     return { group: String(best.attribute_value), perMetric: {} };
   };
   const referenceMethodOptions = [
-    { id: 'majority', name: 'Grupo Mayoritario', description: 'Usa el subgrupo más grande como referencia.' },
-    { id: 'best_performance', name: 'Grupo con Mejor Desempeño', description: 'Usa el subgrupo con el menor error.' },
-    { id: 'custom', name: 'Personalizado', description: 'Selecciona manualmente cada grupo de referencia.' },
+    { id: 'majority', name: 'Grupo más numeroso (recomendado)', description: 'Compara cada grupo con el que tiene más casos.' },
+    { id: 'best_performance', name: 'Grupo con menos errores', description: 'Compara con el grupo al que mejor le va en la métrica principal.' },
+    { id: 'custom', name: 'Personalizado', description: 'Tú eliges el grupo, si hay una razón legal o institucional.' },
   ];
 
   if (!protectedColumns || protectedColumns.length === 0) {
@@ -89,34 +89,28 @@ export const FairnessAnalysis: React.FC<FairnessAnalysisProps> = ({
         </h2>
         
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Método de selección de subgrupo de referencia</h3>
-          <p className="mb-2">
-            Para realizar un análisis de equidad, es necesario definir un subgrupo de referencia dentro de cada variable protegida. Este subgrupo servirá como base de comparación: la herramienta evaluará si los demás subgrupos presentan diferencias significativas en desempeño o error respecto a este.
+          <h3 className="text-lg font-medium mb-2">Grupo de referencia</h3>
+          <p className="mb-3 text-gray-700">
+            Cada grupo se compara con un grupo de referencia de su misma variable protegida. Elige cuál usar:
           </p>
-          <ul className="list-disc pl-6 mb-2">
-            <li className="mb-2">
-              <b>Grupo Mayoritario:</b> Se utiliza el subgrupo con mayor número de instancias en el dataset como referencia.<br/>
-              Este enfoque es útil cuando el grupo dominante representa el estándar de comportamiento más frecuente del modelo, y permite contrastar si los grupos con menor representación están recibiendo un trato desigual.
-            </li>
-            <li>
-              <b>Grupo con Mejor Desempeño:</b> Se utiliza el subgrupo que presenta el menor error (por ejemplo, menor tasa de falsos positivos o falsos negativos) como grupo de referencia.<br/>
-              Este enfoque permite detectar qué grupos están sistemáticamente peor tratados que el grupo con mejor resultado, y es especialmente útil en contextos donde se busca garantizar que todos los grupos alcancen un umbral mínimo de equidad.<br/>
-              Para usar esta opción, también debes seleccionar una métrica de rendimiento (por ejemplo: exactitud, precisión, tasa de falsos negativos). Puedes guiarte por la tabla de métricas de error por subgrupo vista en la sección anterior.
-            </li>
-            <li className="mb-2">
-              <b>Personalizado:</b> Selecciona manualmente el grupo de referencia que consideres relevante para tu proyecto. Esta opción es útil cuando existe una justificación normativa, institucional o contextual para usar un grupo específico como base de comparación.
-            </li>
-          </ul>
-          <br />
 
           <div className="flex flex-col md:flex-row gap-4">
             {referenceMethodOptions.map(method => (
-              <div key={method.id} 
-                   className={`p-4 border rounded-lg cursor-pointer flex-1 ${referenceMethod === method.id ? 'bg-indigo-50 border-indigo-300' : 'bg-gray-50'}`}
-                   onClick={() => setReferenceMethod(method.id)}>
-                <h4 className="font-semibold">{method.name}</h4>
-                <p className="text-sm text-gray-600">{method.description}</p>
-              </div>
+              <label key={method.id}
+                   className={`p-4 border rounded-lg cursor-pointer flex-1 flex items-start gap-3 ${referenceMethod === method.id ? 'bg-indigo-50 border-burgundy' : 'bg-gray-50 border-gray-200'}`}>
+                <input
+                  type="radio"
+                  name="referenceMethod"
+                  value={method.id}
+                  checked={referenceMethod === method.id}
+                  onChange={() => setReferenceMethod(method.id)}
+                  className="mt-1 accent-burgundy"
+                />
+                <span>
+                  <span className="block font-semibold">{method.name}</span>
+                  <span className="block text-sm text-gray-600">{method.description}</span>
+                </span>
+              </label>
             ))}
           </div>
         </div>
