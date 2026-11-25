@@ -39,9 +39,10 @@ export const AbsolutePlotter: React.FC<AbsolutePlotterProps> = ({ groupMetrics, 
     } catch (error) { console.error(error); } finally { setLoading(false); }
   };
 
+  // El gráfico se actualiza al cambiar la métrica o la variable (sin botón).
   useEffect(() => {
     handleUpdate();
-  }, [groupMetrics]);
+  }, [groupMetrics, metric, attribute]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
@@ -54,9 +55,7 @@ export const AbsolutePlotter: React.FC<AbsolutePlotterProps> = ({ groupMetrics, 
           <option value="all">Todas las variables</option>
           {protectedAttributes.map(attr => <option key={attr} value={attr}>{attr}</option>)}
         </select>
-        <button onClick={handleUpdate} disabled={loading} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 disabled:bg-gray-400">
-          {loading ? 'Actualizando...' : 'Actualizar Gráfico'}
-        </button>
+        <span className="text-sm text-ink-60" aria-live="polite">{loading ? 'Actualizando el gráfico…' : ''}</span>
       </div>
       <PlotVisualization title={`Valores Absolutos para ${metric.toUpperCase()}`} plotData={plotData} />
     </div>

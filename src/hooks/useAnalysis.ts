@@ -5,7 +5,6 @@ interface UseAnalysisProps {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setResults: (results: any) => void;
-  setPlotData: (plotData: string | null) => void;
 }
 
 interface AnalysisParams {
@@ -13,6 +12,7 @@ interface AnalysisParams {
   columnSelection: ColumnSelection;
   endpoint: string;
   formData?: Record<string, any>;
+  signal?: AbortSignal;
 }
 
 const createFormData = (params: AnalysisParams): FormData => {
@@ -29,54 +29,20 @@ const createFormData = (params: AnalysisParams): FormData => {
   return formData;
 };
 
-const handleApiRequest = async (url: string, formData: FormData) => {
+const handleApiRequest = async (url: string, formData: FormData, signal?: AbortSignal) => {
   const response = await fetch(url, {
     method: 'POST',
     body: formData,
+    signal,
   });
 
   if (!response.ok) {
-    const errorData = await response.text();
-    throw new Error(`Error en la solicitud: ${errorData}`);
+    let detail = '';
+    try { detail = (await response.json())?.detail || ''; } catch { /* sin detalle */ }
+    throw new Error(`No pudimos analizar el modelo. ${detail || 'Revisa la configuración e inténtalo de nuevo.'}`);
   }
 
   return response.json();
-};
-
-const processAnalysisResponse = (
-  data: any,
-  setResults: (results: any) => void,
-  setPlotData: (plotData: string | null) => void
-) => {
-  console.log('Análisis completado:', data);
-  setResults(data);
-  setPlotData(data.initial_plot);
-};
-
-const processBiasResponse = (
-  data: any,
-  endpoint: string,
-  setResults: (results: any) => void
-) => {
-  console.log('Análisis de sesgos completado:', data);
-  
-  if (endpoint === 'analyze_fairness') {
-    setResults(prev => ({
-      ...prev,
-      fairness_metrics: data.fairness_metrics,
-      protected_attributes: data.protected_attributes,
-      unique_values: data.unique_values
-    }));
-  } else {
-    setResults(prev => ({
-      ...prev,
-      bias_metrics: data.bias_metrics,
-      bias_plot: data.bias_plot,
-      protected_attributes: data.protected_attributes,
-      fairness_metrics: data.fairness_metrics,
-      unique_values: data.unique_values
-    }));
-  }
 };
 
 export const useAnalysis = ({
@@ -85,34 +51,34 @@ export const useAnalysis = ({
   setError,
   setResults,
 }: UseAnalysisProps) => {
-  const executeAnalysis = async (params: AnalysisParams) => {
+  /** Devuelve true si el análisis terminó bien (false si falló o se canceló). */
+  const executeAnalysis = async (params: AnalysisParams): Promise<boolean> => {
     setLoading(true);
     setError(null);
 
     try {
       const formData = createFormData(params);
-      const data = await handleApiRequest(`${BASE_API_URL}/api/${params.endpoint}`, formData);
-      
-      // Lógica de procesamiento de respuesta simplificada y corregida
-      console.log('Análisis completado:', data);
+      const data = await handleApiRequest(`${BASE_API_URL}/api/${params.endpoint}`, formData, params.signal);
       setResults(data); // Guardar directamente la respuesta completa del backend
-
+      return true;
     } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return false; // cancelado
       console.error('Error en análisis:', err);
       setError(err instanceof Error ? err.message : 'Error desconocido');
+      return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAnalyze = async (file: File, columnSelection: ColumnSelection, params: any) => {
-    await executeAnalysis({
+  const handleAnalyze = (file: File, columnSelection: ColumnSelection, params: any, signal?: AbortSignal) =>
+    executeAnalysis({
       file,
       columnSelection,
       endpoint: 'full_analysis',
-      formData: { params }
+      formData: { params },
+      signal,
     });
-  };
 
   const handleBiasAnalysis = async (file: File, columnSelection: any, params: any) => {
     setLoading(true);

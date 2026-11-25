@@ -11,7 +11,8 @@ export interface ColumnSelection {
 
 export interface PreviewData {
   columns: string[];
-  rows: Record<string, any>[];
+  /** Primeras filas del archivo (así lo devuelve /api/preview). */
+  preview: Record<string, any>[];
 }
 
 // --- EDA (Análisis Exploratorio) ---

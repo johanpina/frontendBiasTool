@@ -211,7 +211,10 @@ export const LandingContent: React.FC<LandingContentProps> = ({ onStart }) => {
           <h2 className="font-display text-2xl font-semibold text-ink mb-1">Comienza tu evaluación</h2>
           <p className="text-sm text-ink-60 mb-5">
             Necesitas un archivo <b>.csv</b> (máximo 10 MB) con una fila por caso y estas columnas: predicción del
-            modelo, valor real y variables protegidas.
+            modelo, valor real y variables protegidas.{' '}
+            <a href="/ejemplos/ejemplo_binario.csv" download className="text-burgundy font-semibold hover:underline">
+              Ver ejemplo de archivo
+            </a>
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>

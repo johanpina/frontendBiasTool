@@ -183,9 +183,11 @@ const TREE: Record<string, Node> = {
 
 interface Props {
   onComplete?: (metricDisparityKey: string) => void;
+  /** Clase positiva elegida en 3b, para nombrarla en las preguntas. */
+  positiveLabel?: string | null;
 }
 
-export const MetricSelectorTree: React.FC<Props> = ({ onComplete }) => {
+export const MetricSelectorTree: React.FC<Props> = ({ onComplete, positiveLabel }) => {
   const [path, setPath] = useState<string[]>(['inicio']);
   const current = TREE[path[path.length - 1]];
 
@@ -222,7 +224,9 @@ export const MetricSelectorTree: React.FC<Props> = ({ onComplete }) => {
         {current.type === 'q' && (
           <>
             <div className="rounded-lg px-4 py-3 mb-4" style={{ backgroundColor: AZUL }}>
-              <p className="text-white font-semibold">{current.text}</p>
+              <p className="text-white font-semibold">
+                {positiveLabel ? current.text.replace('“positiva”', `“${positiveLabel}”`) : current.text}
+              </p>
               {current.help && <p className="text-white/80 text-sm mt-1">{current.help}</p>}
             </div>
             <div className="space-y-2.5">
@@ -282,7 +286,7 @@ export const MetricSelectorTree: React.FC<Props> = ({ onComplete }) => {
                 <p><b>La pregunta que responde:</b> <i>{m.idea}</i></p>
                 <p>{m.explica}</p>
                 <div className="rounded-lg p-3 mt-2" style={{ backgroundColor: '#FBF3F4', border: `1px solid ${TEAL}` }}>
-                  <b style={{ color: TERRA }}>¿Dónde la reviso?</b> En la pestaña <b>Análisis de Equidad</b>, observa la columna
+                  <b style={{ color: TERRA }}>¿Dónde la reviso?</b> En el paso 4, pestaña <b>Veredicto y resumen</b>, observa la columna
                   <b> “{m.columna}”</b> de la tabla de disparidades y su gráfico. Una disparidad cercana a <b>1.00</b> indica equidad
                   en esa métrica; valores lejanos a 1 señalan un posible sesgo.
                 </div>

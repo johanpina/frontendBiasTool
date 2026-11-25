@@ -6,6 +6,7 @@ import { GitCompareArrows } from 'lucide-react';
 import { EdaResult } from '../../types';
 import { getCrosstab, rowTotals } from './edaUtils';
 import { categoricalColor, INK } from '../../lib/vizPalette';
+import { orderClasses } from '../../lib/classOrder';
 
 interface Props {
   eda: EdaResult;
@@ -45,7 +46,8 @@ export const BivariateExplorer: React.FC<Props> = ({
       });
       return row;
     });
-    return { data: rows, series: ct.y_values };
+    // Orden y color fijos por clase en todos los gráficos (U6).
+    return { data: rows, series: orderClasses(ct.y_values) };
   }, [ct, mode]);
 
   return (

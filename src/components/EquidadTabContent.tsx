@@ -1,9 +1,8 @@
 
 
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
-import { FairnessAnalysis } from './FairnessAnalysis';
 
 import { DisparityPlotter } from './bias-analysis/DisparityPlotter';
 
@@ -22,11 +21,10 @@ interface EquidadTabContentProps {
 
   results: any;
 
-  loading: boolean;
-
-  onAnalyze: (params: any) => void;
-
   BASE_API_URL: string;
+
+  /** Vuelve al paso 3 para cambiar la tolerancia o el grupo de referencia. */
+  onEditConfig: () => void;
 
 }
 
@@ -36,107 +34,28 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
   results,
 
-  loading,
-
-  onAnalyze,
-
   BASE_API_URL,
+
+  onEditConfig,
 
 }) => {
 
   const protectedColumns = results?.metadata?.protected_attributes || [];
 
-  const uniqueValues = results?.metadata?.unique_values || {};
 
 
-
-  // --- State Lifted from FairnessAnalysis ---
-
-  const [referenceMethod, setReferenceMethod] = useState('majority');
-
-  const [customReferenceGroups, setCustomReferenceGroups] = useState<Record<string, string>>({});
-
-  const [performanceMetric, setPerformanceMetric] = useState('fpr');
-
-  
-
-  // --- State for the new slider ---
-
-  const [localThreshold, setLocalThreshold] = useState(results?.metadata?.fairness_threshold || 1.25);
-
-
-
-  useEffect(() => {
-
-    // Initialize localThreshold when results change
-
-    if (results?.metadata?.fairness_threshold) {
-
-      setLocalThreshold(results.metadata.fairness_threshold);
-
-    }
-
-
-
-    // Initialize custom reference groups
-
-    if (protectedColumns && protectedColumns.length > 0) {
-
-      const initialGroups: Record<string, string> = {};
-
-      protectedColumns.forEach(col => {
-
-        if (uniqueValues[col] && uniqueValues[col].length > 0) {
-
-          initialGroups[col] = uniqueValues[col][0];
-
-        }
-
-      });
-
-      setCustomReferenceGroups(initialGroups);
-
-    }
-
-  }, [results, protectedColumns, uniqueValues]);
-
-
-
-  const handleCustomGroupChange = (attribute: string, value: string) => {
-
-    setCustomReferenceGroups(prev => ({ ...prev, [attribute]: value }));
-
-  };
-
-
-
-  const handleAnalysisClick = (threshold?: number) => {
-
-    const params = {
-
-      referenceMethod,
-
-      ...(referenceMethod === 'custom' && { referenceGroups: customReferenceGroups }),
-
-      ...(referenceMethod === 'best_performance' && { performanceMetric }),
-
-      fairness_threshold: threshold || localThreshold, // Use specified threshold or local state
-
-    };
-
-    onAnalyze(params);
-
-  };
 
   // --- Diagnóstico de transparencia: qué subgrupos explican cada veredicto ---
   const minGroupSize = results?.metadata?.min_group_size ?? 50;
-  const tau = results?.metadata?.fairness_threshold ?? localThreshold;
+  const tau = results?.metadata?.fairness_threshold ?? 1.25;
   const ERROR_METRICS: [string, string][] = [
     ['fpr_disparity', 'FPR'], ['fnr_disparity', 'FNR'],
     ['for_disparity', 'FOR'], ['fdr_disparity', 'FDR'],
   ];
   // Clase evaluada: en multiclase la seleccionada; en binario, "positivos".
-  const pos: string = results?.metadata?.selected_class ?? 'positivos';
+  const posMeta = results?.metadata?.positive_class;
+  const pos: string = results?.metadata?.selected_class
+    ?? (posMeta != null && posMeta !== '1' && posMeta !== '0' ? posMeta : 'positivos');
   // Frase en lenguaje simple de qué mide cada tasa para un grupo.
   const describeRate = (m: string, pct: string) => {
     switch (m) {
@@ -205,33 +124,12 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
     <div className="space-y-8">
 
-      <FairnessAnalysis
-
-        protectedColumns={protectedColumns}
-
-        uniqueValues={uniqueValues}
-
-        loading={loading}
-
-        referenceMethod={referenceMethod}
-
-        setReferenceMethod={setReferenceMethod}
-
-        customReferenceGroups={customReferenceGroups}
-
-        handleCustomGroupChange={handleCustomGroupChange}
-
-        performanceMetric={performanceMetric}
-
-        setPerformanceMetric={setPerformanceMetric}
-
-        handleAnalysisClick={() => handleAnalysisClick(results.metadata.fairness_threshold)} // Use original threshold
-
-        biasMetrics={results?.tables?.bias_metrics}
-
-      />
-
-
+      <p className="text-sm text-ink-80">
+        Tolerancia: <b>{tau.toFixed(2).replace('.', ',')}×</b> ({(1 / tau).toFixed(2).replace('.', ',')}–{tau.toFixed(2).replace('.', ',')}) ·{' '}
+        <button type="button" onClick={onEditConfig} className="text-burgundy font-semibold underline underline-offset-2">
+          Cambiar tolerancia o grupo de referencia
+        </button>
+      </p>
 
       {results && (
 
@@ -351,76 +249,6 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
             <div className="bg-indigo-50 border-l-4 border-burgundy p-3 rounded mt-4">
 
               <span className="font-semibold text-burgundy">Nota:</span> Desliza la tabla hacia la derecha para explorar todas las métricas disponibles: exactitud, tasas de error, sensibilidad, precisión, entre otras.
-
-            </div>
-
-          </div>
-
-
-
-          {/* --- Slider de tolerancia (multiplicador ×) y Recalcular --- */}
-
-          <div className="bg-white p-6 rounded-lg shadow-sm my-8 border border-gray-200">
-
-            <h2 className="text-xl font-semibold mb-2">Ajustar Tolerancia y Recalcular</h2>
-
-            <p className="text-gray-700 mb-3">
-
-              La tolerancia marca cuánta <b>diferencia</b> aceptas entre un grupo y el grupo de referencia antes de
-              llamarla inequitativa. <b>Más a la derecha</b> = más permisivo; <b>más a la izquierda</b> = más estricto.
-
-            </p>
-
-            <div className="bg-indigo-50 border border-rose-light rounded-lg p-3 mb-4 text-sm text-ink-80">
-              <b>Cómo leerlo:</b> con <b>{localThreshold.toFixed(2)}×</b>, un grupo es <b>equitativo</b> si su valor
-              queda entre <b>{(1 / localThreshold).toFixed(2)}</b> y <b>{localThreshold.toFixed(2)}</b> veces el del
-              grupo de referencia (1.00 = sin diferencia). Ej.: 1.25× tolera hasta un 25% de diferencia (la “regla del 80%”).
-            </div>
-
-            <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg mb-2">
-
-              <input
-
-                type="range"
-
-                min="1"
-
-                max="3"
-
-                step="0.05"
-
-                value={localThreshold}
-
-                onChange={(e) => setLocalThreshold(parseFloat(e.target.value))}
-
-                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-
-              />
-
-              <span className="font-mono text-lg text-indigo-600 whitespace-nowrap">{localThreshold.toFixed(2)}×</span>
-
-            </div>
-
-            <p className="text-sm text-gray-600 mb-4">
-              Rango equitativo actual: <b>{(1 / localThreshold).toFixed(2)}</b> – <b>{localThreshold.toFixed(2)}</b>.
-              Pulsa <b>Recalcular</b> para aplicar el nuevo valor.
-            </p>
-
-            <div className="flex justify-end">
-
-              <button
-
-                onClick={() => handleAnalysisClick()}
-
-                disabled={loading}
-
-                className="px-6 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-sm hover:bg-indigo-700 disabled:bg-gray-400"
-
-              >
-
-                {loading ? 'Recalculando...' : 'Recalcular'}
-
-              </button>
 
             </div>
 
