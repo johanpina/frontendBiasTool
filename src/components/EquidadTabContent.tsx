@@ -147,20 +147,38 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
       default: return `${m.toUpperCase()} = ${pct}`;
     }
   };
+  // Qué casos cuenta cada tasa (su denominador).
+  const evaluatedCases = (m: string, n: string) => {
+    switch (m) {
+      case 'fnr': return `${n} casos ${pos}`;
+      case 'fpr': return `${n} casos que no eran ${pos}`;
+      case 'for': return `${n} casos descartados por el modelo`;
+      case 'fdr': return `${n} casos marcados como ${pos}`;
+      default: return `${n} casos`;
+    }
+  };
   const buildDiagnostics = () => {
     const bias = results?.tables?.bias_metrics || [];
     const lower = 1 / tau, upper = tau;
-    const byAttr: Record<string, { offenders: any[]; insufficient: any[] }> = {};
+    const byAttr: Record<string, { offenders: any[]; insufficient: any[]; partial: any[] }> = {};
     bias.forEach((r: any) => {
       const a = r.attribute_name;
-      if (!byAttr[a]) byAttr[a] = { offenders: [], insufficient: [] };
+      if (!byAttr[a]) byAttr[a] = { offenders: [], insufficient: [], partial: [] };
       if (r.insufficient_sample) {
         byAttr[a].insufficient.push({ group: r.attribute_value, n: r.group_size, npos: r.group_label_pos });
         return;
       }
+      // Tasas con pocos casos evaluados: no cuentan para el veredicto.
+      const lowRates = ERROR_METRICS
+        .map(([k, label]) => ({ m: k.replace('_disparity', ''), label }))
+        .filter(({ m }) => r[`${m}_insufficient`]);
+      if (lowRates.length) {
+        byAttr[a].partial.push({ group: r.attribute_value, rates: lowRates.map(({ m, label }) => ({ m, label, n: r[`${m}_n_eval`] })) });
+      }
       if (r.fairness_conclusion === 'Unfair') {
         let worst: any = null;
         ERROR_METRICS.forEach(([k, label]) => {
+          if (r[`${k.replace('_disparity', '')}_insufficient`]) return;
           const v = r[k];
           if (v == null || Number.isNaN(v)) return;
           if (v < lower || v > upper) {
@@ -180,7 +198,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
   };
   const diagnostics = buildDiagnostics();
   const hasDiagnostics = Object.values(diagnostics).some(
-    (d) => d.offenders.length > 0 || d.insufficient.length > 0
+    (d) => d.offenders.length > 0 || d.insufficient.length > 0 || d.partial.length > 0
   );
 
   return (
@@ -260,6 +278,8 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
 
             BASE_API_URL={BASE_API_URL}
 
+            classLabel={results.metadata.selected_class}
+
           />
 
           {/* Filtrar columnas internas de los datos mostrados */}
@@ -279,6 +299,7 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
                   Object.keys(row).forEach((k) => {
                     if (['score_threshold', 'insufficient_sample', 'model_id', 'k'].includes(k)) return;
                     if (k.endsWith('_significance') || k.endsWith('_ref_group_value')) return;
+                    if (k.endsWith('_insufficient') || k.endsWith('_n_eval')) return;
                     out[k] = row[k];
                   });
                   // Marca la fila del grupo de referencia con "(ref)".
@@ -424,11 +445,11 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
               <h2 className="text-xl font-semibold mb-1">¿Por qué estas conclusiones?</h2>
               <p className="text-sm text-gray-600 mb-4">
                 Detalle de los subgrupos que determinan cada veredicto, con la tolerancia actual de <b>{tau.toFixed(2)}×</b>.
-                Los subgrupos con menos de <b>{minGroupSize}</b> casos se consideran de <b>muestra insuficiente</b> y no afectan la conclusión.
+                Una tasa calculada sobre menos de <b>{minGroupSize}</b> casos se considera de <b>muestra insuficiente</b> y no afecta la conclusión.
               </p>
               <div className="space-y-4">
                 {Object.entries(diagnostics)
-                  .filter(([, d]) => d.offenders.length > 0 || d.insufficient.length > 0)
+                  .filter(([, d]) => d.offenders.length > 0 || d.insufficient.length > 0 || d.partial.length > 0)
                   .map(([attr, d]) => (
                   <div key={attr} className="border-l-4 pl-3" style={{ borderColor: d.offenders.length ? '#ef4444' : '#22c55e' }}>
                     <p className="font-semibold text-gray-800">
@@ -453,6 +474,15 @@ export const EquidadTabContent: React.FC<EquidadTabContentProps> = ({
                                 )}
                               </>
                             )}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {d.partial.length > 0 && (
+                      <ul className="text-xs text-gray-500 mt-1 space-y-0.5">
+                        {d.partial.map((g: any, i: number) => (
+                          <li key={i}>
+                            {g.group}: muestra insuficiente para {g.rates.map((r: any) => `${r.label} (${evaluatedCases(r.m, fmtInt(r.n))})`).join(', ')}. No se usa en el veredicto.
                           </li>
                         ))}
                       </ul>

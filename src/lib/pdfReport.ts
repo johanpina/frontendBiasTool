@@ -49,8 +49,8 @@ export async function generatePdfReport(
 
   // Gráficos (basados en FPR): valores absolutos + disparidad.
   const [absPlot, dispPlot] = await Promise.all([
-    fetchPlot(`${BASE_API_URL}/api/absolute_plot`, { group_metrics_for_plotting: gmp, metric: 'fpr', attribute: 'all' }),
-    fetchPlot(`${BASE_API_URL}/api/rerender_plot`, { bias_metrics: bias, metrics: ['fpr_disparity'], attributes: ['all'] }),
+    fetchPlot(`${BASE_API_URL}/api/absolute_plot`, { group_metrics_for_plotting: gmp, metric: 'fpr', attribute: 'all', class_label: meta.selected_class }),
+    fetchPlot(`${BASE_API_URL}/api/rerender_plot`, { bias_metrics: bias, metrics: ['fpr_disparity'], attributes: ['all'], class_label: meta.selected_class }),
   ]);
 
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -138,7 +138,7 @@ export async function generatePdfReport(
       if (y > H - 120) newPage();
       doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
       doc.text('Roles sugeridos de las columnas', M, y); y += 8;
-      const ROLE: Record<string, string> = { outcome: 'resultado', protected: 'protegida', id: 'identificador', feature: 'atributo' };
+      const ROLE: Record<string, string> = { prediction: 'predicción del modelo', actual: 'valor real', outcome: 'predicción o valor real', protected: 'variable protegida', id: 'identificador', unused: 'sin uso', feature: 'sin uso' };
       const DTYPE: Record<string, string> = { numeric: 'Numérica', categorical: 'Categórica', binary: 'Binaria' };
       autoTable(doc, {
         ...tableBaseEda,

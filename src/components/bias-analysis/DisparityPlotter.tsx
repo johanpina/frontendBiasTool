@@ -15,9 +15,10 @@ interface DisparityPlotterProps {
   protectedAttributes: string[];
   fairnessThreshold: number;
   BASE_API_URL: string;
+  classLabel?: string | null; // clase vista en multiclase (va al título del gráfico)
 }
 
-export const DisparityPlotter: React.FC<DisparityPlotterProps> = ({ biasMetrics, protectedAttributes, fairnessThreshold, BASE_API_URL }) => {
+export const DisparityPlotter: React.FC<DisparityPlotterProps> = ({ biasMetrics, protectedAttributes, fairnessThreshold, BASE_API_URL, classLabel }) => {
   const [metric, setMetric] = useState('fpr_disparity');
   const [attribute, setAttribute] = useState('all');
   const [plotData, setPlotData] = useState<string | null>(null);
@@ -35,7 +36,8 @@ export const DisparityPlotter: React.FC<DisparityPlotterProps> = ({ biasMetrics,
       const payload = { 
         bias_metrics: biasMetrics, 
         metrics: [metric], // El backend ahora espera una lista
-        attributes: [attribute] 
+        attributes: [attribute],
+        class_label: classLabel,
       };
       const response = await fetch(`${BASE_API_URL}/api/rerender_plot`, { // Endpoint corregido
         method: 'POST',

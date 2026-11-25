@@ -23,14 +23,17 @@ const ALERT_STYLE: Record<string, { border: string; bg: string; icon: React.Reac
   info: { border: '#2a78d6', bg: '#eff6ff', icon: <Info size={18} color={STATUS.info} /> },
 };
 
-// Tonos de la paleta Civic Rose, distinguibles entre sí:
-// resultado = verde éxito · protegida = burdeos · atributo = ámbar · id = neutro.
-const ROLE_LABEL: Record<string, { label: string; className: string }> = {
-  outcome: { label: 'resultado', className: 'bg-[#E7F0EA] text-[#2F6B4F]' },
-  protected: { label: 'protegida', className: 'bg-rose-tint text-burgundy' },
-  id: { label: 'identificador', className: 'bg-paper-deep text-ink-40' },
-  feature: { label: 'atributo', className: 'bg-[#F6EADB] text-[#A2611F]' },
+// Tonos de la paleta Civic Rose, distinguibles entre sí.
+const ROLE_LABEL: Record<string, { label: string; desc: string; className: string }> = {
+  id: { label: 'Identificador', desc: 'distingue cada fila (ej.: RUT, n° de caso). No se analiza.', className: 'bg-paper-deep text-ink-60' },
+  prediction: { label: 'Predicción del modelo', desc: 'lo que el modelo dijo para cada caso.', className: 'bg-[#E7F0EA] text-[#2F6B4F]' },
+  actual: { label: 'Valor real', desc: 'lo que realmente ocurrió. Se compara con la predicción para encontrar errores.', className: 'bg-[#E7F0EA] text-[#2F6B4F]' },
+  outcome: { label: 'Predicción o valor real', desc: 'no pudimos distinguir cuál es cuál por el nombre; elígelo en el paso 3.', className: 'bg-[#E7F0EA] text-[#2F6B4F]' },
+  protected: { label: 'Variable protegida', desc: 'característica de las personas. Se revisa si el modelo se equivoca más con algún grupo.', className: 'bg-rose-tint text-burgundy' },
+  unused: { label: 'Sin uso', desc: 'no cumple ninguno de estos roles y no se incluye en el análisis.', className: 'bg-[#F6EADB] text-[#A2611F]' },
 };
+ROLE_LABEL.feature = ROLE_LABEL.unused;
+const ROLE_ORDER = ['id', 'prediction', 'actual', 'outcome', 'protected', 'unused'];
 
 const StatTile: React.FC<{ icon: React.ReactNode; value: React.ReactNode; label: string; accent?: string }> =
   ({ icon, value, label, accent }) => (
@@ -58,7 +61,9 @@ export const EdaPanel: React.FC<Props> = ({ eda, loading, error }) => {
   const defaults = useMemo(() => {
     if (!eda) return { outcome: '', protected: '' };
     const cols = eda.crosstab_columns || [];
-    const outcome = eda.columns.find((c) => c.role_hint === 'outcome' && cols.includes(c.name))?.name || cols[0] || '';
+    const outcome = (['prediction', 'actual', 'outcome'] as const)
+      .map((r) => eda.columns.find((c) => c.role_hint === r && cols.includes(c.name))?.name)
+      .find(Boolean) || cols[0] || '';
     const prot = eda.columns.find((c) => c.role_hint === 'protected' && cols.includes(c.name))?.name
       || cols.find((c) => c !== outcome) || '';
     return { outcome, protected: prot };
@@ -166,19 +171,28 @@ export const EdaPanel: React.FC<Props> = ({ eda, loading, error }) => {
 
           {/* Roles sugeridos */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">Roles sugeridos de las columnas</h3>
-            <p className="text-sm text-gray-600 mb-3">Una pista automática del papel de cada columna. Tú decides la selección final en la configuración.</p>
-            <div className="flex flex-wrap gap-2">
-              {eda.columns.map((c) => {
-                const r = ROLE_LABEL[c.role_hint] || ROLE_LABEL.feature;
+            <h3 className="text-lg font-semibold text-gray-900 mb-1">Roles de las columnas</h3>
+            <p className="text-sm text-gray-600 mb-3">
+              Detectamos qué función cumple cada columna. Con esto dejaremos listo el paso 3: no tendrás que elegirlas
+              de nuevo, pero podrás cambiarlas.
+            </p>
+            <ul className="space-y-2">
+              {ROLE_ORDER.map((role) => {
+                const names = eda.columns
+                  .filter((c) => (c.role_hint === 'feature' ? 'unused' : c.role_hint) === role)
+                  .map((c) => c.name);
+                if (!names.length) return null;
+                const r = ROLE_LABEL[role];
                 return (
-                  <span key={c.name} className="inline-flex items-center gap-1.5 text-sm border border-rose-light rounded-lg px-2.5 py-1">
-                    <span className="font-medium text-ink-80">{c.name}</span>
-                    <span className={`text-[11px] px-1.5 py-0.5 rounded-full ${r.className}`}>{r.label}</span>
-                  </span>
+                  <li key={role} className="text-sm text-ink-80 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                    <span className="font-mono text-[13px] font-medium">{names.join(', ')}</span>
+                    <span className="text-ink-40">→</span>
+                    <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${r.className}`}>{r.label}</span>
+                    <span className="text-ink-60">{r.desc}</span>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
         </div>
       )}

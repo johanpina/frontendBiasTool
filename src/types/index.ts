@@ -36,7 +36,8 @@ export interface EdaColumn {
   unique: number;
   top_values: EdaTopValue[];
   categorical_like: boolean;
-  role_hint: 'outcome' | 'protected' | 'id' | 'feature';
+  // 'outcome' = predicción o valor real sin nombre reconocible; 'feature' = valor antiguo de 'unused'.
+  role_hint: 'prediction' | 'actual' | 'outcome' | 'protected' | 'id' | 'unused' | 'feature';
   stats: null | {
     min: number; max: number; mean: number; std: number; median: number;
   };

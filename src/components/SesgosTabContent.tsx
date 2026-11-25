@@ -37,6 +37,7 @@ export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BAS
         groupMetrics={results.tables.group_metrics_for_plotting}
         protectedAttributes={results.metadata.protected_attributes}
         BASE_API_URL={BASE_API_URL}
+        classLabel={results.metadata.selected_class}
       />
       <DataTable
         title="Total de instancias por subgrupo"

@@ -7,9 +7,10 @@ interface AbsolutePlotterProps {
   groupMetrics: any[];
   protectedAttributes: string[];
   BASE_API_URL: string;
+  classLabel?: string | null; // clase vista en multiclase (va al título del gráfico)
 }
 
-export const AbsolutePlotter: React.FC<AbsolutePlotterProps> = ({ groupMetrics, protectedAttributes, BASE_API_URL }) => {
+export const AbsolutePlotter: React.FC<AbsolutePlotterProps> = ({ groupMetrics, protectedAttributes, BASE_API_URL, classLabel }) => {
   const [metric, setMetric] = useState('fpr');
   const [attribute, setAttribute] = useState('all');
   const [plotData, setPlotData] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export const AbsolutePlotter: React.FC<AbsolutePlotterProps> = ({ groupMetrics, 
     if (!groupMetrics || groupMetrics.length === 0) return;
     setLoading(true);
     try {
-      const payload = { group_metrics_for_plotting: groupMetrics, metric, attribute };
+      const payload = { group_metrics_for_plotting: groupMetrics, metric, attribute, class_label: classLabel };
       const response = await fetch(`${BASE_API_URL}/api/absolute_plot`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

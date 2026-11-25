@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { trackStepComplete, trackToolComplete, trackToolExport } from '../lib/analytics';
 import { FileUpload } from './FileUpload';
@@ -71,6 +71,23 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
       runEda(file);
     }
   };
+
+  // Precarga el paso 3 con los roles que detectó la exploración (paso 2), solo en
+  // los campos que la persona aún no ha elegido. Puede cambiarlos después.
+  useEffect(() => {
+    if (!eda || !previewData) return;
+    const cols = new Set(previewData.columns);
+    const byRole = (role: string) => eda.columns.filter(c => c.role_hint === role && cols.has(c.name)).map(c => c.name);
+    const [pred] = byRole('prediction');
+    const [actual] = byRole('actual');
+    const prot = byRole('protected');
+    setColumnSelection(prev => ({
+      ...prev,
+      predictions: prev.predictions || pred || '',
+      actual: prev.actual || actual || '',
+      protected: prev.protected.length ? prev.protected : prot,
+    }));
+  }, [eda, previewData, setColumnSelection]);
 
   const { handleAnalyze, handleBiasAnalysis, handleRecalculateFairness } = useAnalysis({
     BASE_API_URL,
