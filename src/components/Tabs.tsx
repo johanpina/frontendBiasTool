@@ -6,10 +6,15 @@ interface TabsProps {
     name: string;
     content: React.ReactNode;
   }[];
+  /** Pestaña activa controlada desde fuera (opcional). */
+  index?: number;
+  onChange?: (index: number) => void;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ tabs }) => {
-  const [selectedIndex, setSelectedIndex] = useState(0);
+export const Tabs: React.FC<TabsProps> = ({ tabs, index, onChange }) => {
+  const [inner, setInner] = useState(0);
+  const selectedIndex = index ?? inner;
+  const setSelectedIndex = (i: number) => { setInner(i); onChange?.(i); };
 
   return (
     <div className="w-full">

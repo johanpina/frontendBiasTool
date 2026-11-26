@@ -20,6 +20,8 @@ import { EquidadTabContent } from './EquidadTabContent';
 import { StepBar } from './StepBar';
 import { getModelInfo, defaultPositive, idLikeColumns } from '../lib/modelInfo';
 import { orderClasses } from '../lib/classOrder';
+import { mainMetricFromGuide, overallReason, RATE_NAME, RateKey, fmtTau, fmtInt, totalCases } from '../lib/results';
+import { refMethodLabel } from '../lib/referenceInfo';
 import { ColumnSelection } from '../types';
 
 interface ToolViewProps {
@@ -67,6 +69,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   const [positiveClass, setPositiveClass] = useState('');
   const [reference, setReference] = useState<ReferenceConfig>({ method: 'majority', groups: {} });
   const [submitted, setSubmitted] = useState(false);
+  const [resultTab, setResultTab] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
 
   const {
@@ -183,6 +186,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
       referenceMethod: reference.method,
       ...(reference.method === 'custom' && { referenceGroups: groups }),
       performanceMetric: base && VERDICT_METRICS.includes(base) ? base : 'fpr',
+      // Métrica principal (3c): decide el veredicto. Sin ella, se usan las 4 tasas.
+      ...(mainMetricFromGuide(recommendedMetric) && { mainMetric: mainMetricFromGuide(recommendedMetric) }),
       ...(positiveClass && { positiveClass }),
     };
 
@@ -192,6 +197,7 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     abortRef.current = null;
     if (!ok) return;
     setSelectedClass(null);
+    setResultTab(0);
     trackStepComplete('configuracion', 0, 2);
     trackToolComplete();
     goTo(4);
@@ -231,7 +237,12 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
     setPdfLoading(true);
     try {
       const { generatePdfReport } = await import('../lib/pdfReport');
-      await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric, eda);
+      await generatePdfReport(effectiveResults, BASE_API_URL, recommendedMetric, eda, {
+        fileName: file?.name,
+        predictions: columnSelection.predictions,
+        actual: columnSelection.actual,
+        fullResults: results,
+      });
       trackToolExport('pdf');
     } finally {
       setPdfLoading(false);
@@ -268,6 +279,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
   };
 
   const meta = results?.metadata || {};
+  // Métrica principal con que se calculó el veredicto (la que devolvió el servidor).
+  const mainMetric: RateKey | null = (meta.main_metric as RateKey) ?? null;
 
   return (
     <div className="min-h-screen bg-paper">
@@ -412,11 +425,40 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               className="mb-4"
             />
 
-            {!isMulticlass && (
-              <p className="mb-6 text-sm text-ink-80">
-                <b>Modelo binario</b> · Clase positiva: <b>{meta.positive_class ?? '1'}</b> · Método: Aequitas
+            {/* 1. Encabezado: modelo, métrica principal, tolerancia y referencia */}
+            <div className="mb-6 bg-white rounded-xl border border-rose-light px-5 py-4 text-sm text-ink-80 space-y-1.5">
+              <p>
+                {isMulticlass ? (
+                  <><b>Modelo multiclase</b> ({classes.length} clases) · Método: cada clase se compara contra las demás juntas</>
+                ) : (
+                  <><b>Modelo binario</b> · Clase positiva: <b>{meta.positive_class ?? '1'}</b> · Método: Aequitas</>
+                )}
+                {totalCases(results.tables?.bias_metrics || []) != null && (
+                  <> · <b>{fmtInt(totalCases(results.tables.bias_metrics))}</b> casos analizados</>
+                )}
               </p>
-            )}
+              <p>
+                {mainMetric ? (
+                  <>
+                    <b>Métrica principal:</b> {RATE_NAME[mainMetric].nombre} ({RATE_NAME[mainMetric].sigla}), elegida en el paso 3c.{' '}
+                    <button type="button" onClick={() => goTo(3)} className="text-burgundy font-semibold underline underline-offset-2">Cambiar</button>
+                    <span className="block text-ink-60 text-xs mt-0.5">
+                      El veredicto y la tabla resumida usan esta métrica. Las otras tres tasas se ven con “Ver otra tasa de error”.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <b>Sin métrica elegida:</b> el veredicto considera las 4 tasas de error.{' '}
+                    <button type="button" onClick={() => goTo(3)} className="text-burgundy font-semibold underline underline-offset-2">Elegir una métrica</button>
+                  </>
+                )}
+              </p>
+              <p>
+                <b>Tolerancia:</b> {fmtTau(meta.fairness_threshold ?? 1.25)} · <b>Referencia:</b>{' '}
+                {meta.ref_method === 'best_performance' ? 'grupo con menos errores' : refMethodLabel(meta.ref_method, meta.performance_metric)}{' '}
+                · <button type="button" onClick={() => goTo(3)} className="text-burgundy font-semibold underline underline-offset-2">Cambiar configuración</button>
+              </p>
+            </div>
 
             {isMulticlass && (
               <div className="mb-6 bg-white p-6 rounded-2xl shadow-sm border border-rose-light">
@@ -464,6 +506,10 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                             }`}
                           >
                             {attr}: {unfair ? 'No equitativo' : 'Equitativo'}
+                            {unfair && (() => {
+                              const why = overallReason(results.by_class, classes, attr, mainMetric, meta.fairness_threshold ?? 1.25, meta.min_group_size ?? 50);
+                              return why ? <span className="font-normal"> ({why})</span> : null;
+                            })()}
                           </span>
                         );
                       })}
@@ -477,6 +523,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
             )}
 
             <Tabs
+              index={resultTab}
+              onChange={setResultTab}
               tabs={[
                 {
                   name: 'Veredicto y resumen',
@@ -484,7 +532,8 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
                     <EquidadTabContent
                       results={effectiveResults}
                       BASE_API_URL={BASE_API_URL}
-                      onEditConfig={() => goTo(3)}
+                      mainMetric={mainMetric}
+                      onShowDetail={() => { setResultTab(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                     />
                   ),
                 },
@@ -519,9 +568,11 @@ export const ToolView: React.FC<ToolViewProps> = ({ onBack }) => {
               <div>
                 <h3 className="font-display text-lg font-semibold text-ink">El PDF incluye:</h3>
                 <ul className="list-disc pl-5 text-sm text-ink-60">
-                  <li>La exploración de tus datos y la configuración usada.</li>
-                  <li>El veredicto por variable protegida y el grupo de referencia.</li>
-                  <li>Las tablas de disparidad y los gráficos.</li>
+                  <li><b>Configuración usada:</b> archivo, columnas, tipo de modelo, clase positiva, métrica principal, tolerancia y grupo de referencia.</li>
+                  <li><b>Veredicto por variable protegida</b>, con su explicación.</li>
+                  <li><b>Tabla resumida y gráficos.</b></li>
+                  <li><b>Anexo:</b> detalle técnico por grupo.</li>
+                  <li>Además, la exploración de tus datos (paso 2).</li>
                 </ul>
                 {isMulticlass && activeClass && (
                   <p className="text-sm text-ink-80 mt-2">Clase incluida en el informe: <b>{activeClass}</b>.</p>

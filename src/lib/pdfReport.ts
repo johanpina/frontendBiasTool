@@ -1,6 +1,20 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { referenceByAttribute, refMethodLabel, recommendedMetricName } from './referenceInfo';
+import { refMethodLabel, recommendedMetricName } from './referenceInfo';
+import {
+  RATE_NAME, RateKey, summaryRows, verdictSentence, isUnfair, positiveLabel, refGroupOf, attrRows, overallReason,
+  fmtInt, fmtPct, fmtPts, fmtTimes, fmtTau, capitalize, totalCases,
+} from './results';
+import { orderClasses } from './classOrder';
+
+/** Configuración elegida en el paso 3 (para la sección "Configuración usada"). */
+export interface PdfConfig {
+  fileName?: string;
+  predictions?: string;
+  actual?: string;
+  /** Resultados completos (multiclase: para el veredicto considerando todas las clases). */
+  fullResults?: any;
+}
 
 // Paleta "Civic Rose" (misma identidad de la herramienta / EIA).
 const BURGUNDY: [number, number, number] = [122, 59, 72];   // #7A3B48
@@ -31,8 +45,6 @@ async function fetchPlot(url: string, body: unknown): Promise<string | null> {
   }
 }
 
-const num = (v: unknown) => (typeof v === 'number' ? (Number.isInteger(v) ? String(v) : v.toFixed(3)) : (v ?? '—'));
-const verdict = (v: unknown) => (v === 'Unfair' || v === 'No Equitativo' ? 'No Equitativo' : v === 'Fair' || v === 'Equitativo' ? 'Equitativo' : String(v ?? '—'));
 
 /** Genera y descarga un informe PDF con las tablas y gráficos del análisis. */
 export async function generatePdfReport(
@@ -40,17 +52,24 @@ export async function generatePdfReport(
   BASE_API_URL: string,
   recommendedMetricKey: string | null = null,
   eda: any = null,
+  config: PdfConfig = {},
 ): Promise<void> {
   const tables = results?.tables || {};
   const meta = results?.metadata || {};
   const bias: any[] = tables.bias_metrics || [];
   const gmp: any[] = tables.group_metrics_for_plotting || [];
   const summary: any[] = tables.fairness_summary || [];
+  const mainMetric: RateKey | null = meta.main_metric ?? null;
+  const shownRate: RateKey = mainMetric ?? 'fpr';
+  const tau: number = meta.fairness_threshold ?? 1.25;
+  const minN: number = meta.min_group_size ?? 50;
+  const pos = positiveLabel(meta);
+  const rateTitle = `${capitalize(RATE_NAME[shownRate].nombre)} (${RATE_NAME[shownRate].sigla})`;
 
-  // Gráficos (basados en FPR): valores absolutos + disparidad.
+  // Gráficos de la métrica principal: valores por grupo + disparidad.
   const [absPlot, dispPlot] = await Promise.all([
-    fetchPlot(`${BASE_API_URL}/api/absolute_plot`, { group_metrics_for_plotting: gmp, metric: 'fpr', attribute: 'all', class_label: meta.selected_class }),
-    fetchPlot(`${BASE_API_URL}/api/rerender_plot`, { bias_metrics: bias, metrics: ['fpr_disparity'], attributes: ['all'], class_label: meta.selected_class }),
+    fetchPlot(`${BASE_API_URL}/api/absolute_plot`, { group_metrics_for_plotting: gmp, metric: shownRate, attribute: 'all', class_label: meta.selected_class }),
+    fetchPlot(`${BASE_API_URL}/api/rerender_plot`, { bias_metrics: bias, metrics: [`${shownRate}_disparity`], attributes: ['all'], class_label: meta.selected_class }),
   ]);
 
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -83,9 +102,9 @@ export async function generatePdfReport(
   };
   if (eda) {
     doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...ROSE);
-    doc.text('PASO 01 · EXPLORACIÓN DE LOS DATOS', M, y);
+    doc.text('PASO 2 · EXPLORA TUS DATOS', M, y);
     doc.setFont('times', 'bold'); doc.setFontSize(16); doc.setTextColor(...INK);
-    doc.text('Análisis exploratorio de los datos', M, y + 18); y += 32;
+    doc.text('Exploración de los datos', M, y + 18); y += 32;
 
     // Panorama general.
     autoTable(doc, {
@@ -137,7 +156,7 @@ export async function generatePdfReport(
     if (cols.length) {
       if (y > H - 120) newPage();
       doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
-      doc.text('Roles sugeridos de las columnas', M, y); y += 8;
+      doc.text('Roles de las columnas', M, y); y += 8;
       const ROLE: Record<string, string> = { prediction: 'predicción del modelo', actual: 'valor real', outcome: 'predicción o valor real', protected: 'variable protegida', id: 'identificador', unused: 'sin uso', feature: 'sin uso' };
       const DTYPE: Record<string, string> = { numeric: 'Numérica', categorical: 'Categórica', binary: 'Binaria' };
       autoTable(doc, {
@@ -157,19 +176,6 @@ export async function generatePdfReport(
     newPage();
   }
 
-  // --- Métrica recomendada a observar (si se usó el árbol del Paso 2) ---
-  const recName = recommendedMetricName(recommendedMetricKey);
-  if (recName) {
-    const boxH = 40;
-    doc.setFillColor(...ROSE_PAPER); doc.setDrawColor(...ROSE);
-    doc.roundedRect(M, y, W - 2 * M, boxH, 4, 4, 'FD');
-    doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...BURGUNDY);
-    doc.text('MÉTRICA RECOMENDADA A OBSERVAR', M + 12, y + 15);
-    doc.setFont('times', 'bold'); doc.setFontSize(13); doc.setTextColor(...INK);
-    doc.text(recName, M + 12, y + 31);
-    y += boxH + 18;
-  }
-
   // Estilos comunes de tabla (líneas civic).
   // Nota: no pintamos el fondo en didDrawPage porque ese hook corre DESPUÉS de
   // dibujar la tabla y la taparía. El fondo se pinta al inicio y en newPage().
@@ -177,121 +183,144 @@ export async function generatePdfReport(
     styles: { lineColor: LINE, lineWidth: 0.5, textColor: INK as any, font: 'helvetica' },
     margin: { left: M, right: M },
   };
+  const sectionTitle = (eyebrow: string, title: string) => {
+    if (y > H - 140) newPage();
+    doc.setFont('courier', 'normal'); doc.setFontSize(8); doc.setTextColor(...ROSE);
+    doc.text(eyebrow, M, y);
+    doc.setFont('times', 'bold'); doc.setFontSize(15); doc.setTextColor(...INK);
+    doc.text(title, M, y + 18); y += 30;
+  };
 
-  // --- Resumen del análisis ---
-  const gc0 = tables.group_counts?.[0] || {};
-  const nFilas = gc0['Total Entidades'] ?? gc0['total_entities'] ?? '—';
-  const tau = meta.fairness_threshold ?? 1.25;
-  const resumen: [string, string][] = [
-    ['Registros analizados', String(nFilas)],
-    ['Variables protegidas', (meta.protected_attributes || []).join(', ') || '—'],
-    ['Tolerancia de disparidad', `${Number(tau).toFixed(2)}×  (equitativo entre ${(1 / tau).toFixed(2)} y ${Number(tau).toFixed(2)})`],
-    ['Grupo de referencia', refMethodLabel(meta.ref_method, meta.performance_metric)],
-    ['Muestra mínima por subgrupo', String(meta.min_group_size ?? 50)],
-    ['Tipo de modelo', meta.task_type === 'multiclass' ? `Multiclase — clase: ${meta.selected_class ?? ''}` : 'Binario'],
+  // --- Configuración usada ---
+  const attrs: string[] = meta.protected_attributes || [...new Set(bias.map((r) => r.attribute_name))];
+  const isMulti = meta.task_type === 'multiclass';
+  const recName = recommendedMetricName(recommendedMetricKey);
+  const configRows: [string, string][] = [
+    ['Archivo', config.fileName || '—'],
+    ['Casos analizados', fmtInt(totalCases(bias))],
+    ['Predicción del modelo', config.predictions || '—'],
+    ['Valor real', config.actual || '—'],
+    ['Variables protegidas', attrs.join(', ') || '—'],
+    ['Tipo de modelo', isMulti
+      ? `Multiclase (${(meta.classes || []).length} clases) · cada clase se compara contra las demás`
+      : 'Binario · Método: Aequitas'],
+    [isMulti ? 'Clase de este informe' : 'Clase positiva', String(isMulti ? meta.selected_class ?? '—' : meta.positive_class ?? '1')],
+    ['Métrica principal', mainMetric
+      ? `${capitalize(RATE_NAME[mainMetric].nombre)} (${RATE_NAME[mainMetric].sigla})`
+      : `Sin métrica elegida: el veredicto considera las 4 tasas de error${recName ? ` (la guía sugirió ${recName})` : ''}`],
+    ['Tolerancia', `${fmtTimes(tau)} · equitativo entre ${fmtTau(tau)} veces la referencia`],
+    ['Grupo de referencia', meta.ref_method === 'best_performance' ? 'grupo con menos errores' : refMethodLabel(meta.ref_method, meta.performance_metric)],
+    ['Muestra mínima', `${fmtInt(minN)} casos evaluados por tasa`],
   ];
+  sectionTitle('PASO 3 · CONFIGURACIÓN', 'Configuración usada');
   autoTable(doc, {
     ...tableBase,
     startY: y,
-    head: [['Parámetro', 'Valor']],
-    body: resumen,
+    body: configRows,
     theme: 'grid',
-    headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
     bodyStyles: { fontSize: 9 },
+    columnStyles: { 0: { cellWidth: 140, fontStyle: 'bold', textColor: BURGUNDY } },
     alternateRowStyles: { fillColor: ROSE_PAPER },
   });
   y = (doc as any).lastAutoTable.finalY + 26;
 
-  // --- Resumen de Equidad por Atributo ---
-  if (y > H - 120) newPage();
-  doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
-  doc.text('Resumen de Equidad por Atributo', M, y); y += 10;
+  // --- Veredicto por variable protegida ---
+  sectionTitle('PASO 4 · RESULTADOS', isMulti ? `Veredicto para la clase ${meta.selected_class}` : 'Veredicto por variable protegida');
   autoTable(doc, {
     ...tableBase,
     startY: y,
-    head: [['Atributo', 'Conclusión']],
-    body: summary.map((r) => [r['Atributo'] ?? r.attribute_name, verdict(r['Conclusión Equidad'] ?? r.fairness_conclusion)]),
+    head: [['Variable', 'Veredicto', 'Explicación']],
+    body: attrs.map((attr) => {
+      const unfair = isUnfair(summary, attr);
+      return [attr, unfair ? 'No equitativo' : 'Equitativo', verdictSentence(bias, attr, mainMetric, unfair, tau, minN, pos).text];
+    }),
     theme: 'striped',
     headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-    bodyStyles: { fontSize: 10 },
+    bodyStyles: { fontSize: 9 },
+    columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 80 } },
     alternateRowStyles: { fillColor: ROSE_PAPER },
     didParseCell: (data) => {
       if (data.section === 'body' && data.column.index === 1) {
-        data.cell.styles.textColor = data.cell.raw === 'No Equitativo' ? DANGER : SUCCESS;
+        data.cell.styles.textColor = data.cell.raw === 'No equitativo' ? DANGER : SUCCESS;
         data.cell.styles.fontStyle = 'bold';
       }
     },
   });
-  y = (doc as any).lastAutoTable.finalY + 26;
+  y = (doc as any).lastAutoTable.finalY + 14;
 
-  // --- Grupo de referencia por atributo ---
-  const attrs: string[] = meta.protected_attributes || [...new Set(bias.map((r) => r.attribute_name))];
-  const refs = referenceByAttribute(bias, attrs);
-  if (refs.length) {
-    if (y > H - 120) newPage();
-    doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
-    doc.text('Grupo de referencia por atributo', M, y); y += 6;
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MUTED);
-    doc.text(`Método: ${refMethodLabel(meta.ref_method, meta.performance_metric)}. Cada subgrupo se compara con su referencia (vale 1.00).`, M, y + 8); y += 16;
+  // Multiclase: veredicto considerando todas las clases.
+  const full = config.fullResults;
+  if (isMulti && Array.isArray(full?.fairness_overall) && full.fairness_overall.length) {
+    const classes = orderClasses(full.metadata?.classes || []);
+    if (y > H - 100) newPage();
+    doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
+    doc.text(`Veredicto considerando las ${classes.length} clases`, M, y); y += 8;
     autoTable(doc, {
       ...tableBase,
       startY: y,
-      head: [['Atributo', 'Grupo de referencia']],
-      body: refs.map((r) => [
-        r.attribute,
-        r.group ?? (Object.entries(r.perMetric).map(([m, g]) => `${m.toUpperCase()}: ${g}`).join('  ·  ') || '—'),
-      ]),
+      head: [['Variable', 'Veredicto', 'Motivo']],
+      body: full.fairness_overall.map((row: any) => {
+        const attr = row['Atributo'] ?? row.attribute_name;
+        const unfair = isUnfair(full.fairness_overall, attr);
+        const why = unfair ? overallReason(full.by_class, classes, attr, mainMetric, tau, minN) : null;
+        return [attr, unfair ? 'No equitativo' : 'Equitativo', why ? capitalize(why) + '.' : '—'];
+      }),
       theme: 'striped',
-      headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-      bodyStyles: { fontSize: 10 },
-      alternateRowStyles: { fillColor: ROSE_PAPER },
+      headStyles: { fillColor: ROSE, textColor: INK, fontSize: 9, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 9 },
+      columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 80 } },
       didParseCell: (data) => {
         if (data.section === 'body' && data.column.index === 1) {
-          data.cell.styles.textColor = BURGUNDY;
+          data.cell.styles.textColor = data.cell.raw === 'No equitativo' ? DANGER : SUCCESS;
           data.cell.styles.fontStyle = 'bold';
         }
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 26;
+    y = (doc as any).lastAutoTable.finalY + 6;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
+    doc.text('Una variable es no equitativa si lo es en al menos una clase.', M, y + 8);
+    y += 22;
   }
 
-  // --- Disparidades por subgrupo (por atributo) ---
+  // --- Tabla resumida (6 columnas) por variable ---
+  y += 8;
+  if (y > H - 140) newPage();
+  doc.setFont('times', 'bold'); doc.setFontSize(14); doc.setTextColor(...INK);
+  doc.text(`Resultados por grupo · ${rateTitle}`, M, y); y += 12;
   for (const attr of attrs) {
-    const rows = bias.filter((r) => r.attribute_name === attr);
+    const rows = summaryRows(bias, attr, shownRate, tau, minN, pos);
     if (!rows.length) continue;
-    const refGroup = refs.find((x) => x.attribute === attr)?.group ?? null;
-    if (y > H - 140) newPage();
-    doc.setFont('times', 'bold'); doc.setFontSize(12); doc.setTextColor(...INK);
-    doc.text(`Disparidades — ${attr}`, M, y); y += 8;
+    if (y > H - 120) newPage();
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK);
+    doc.text(`${attr} · ${rateTitle} · Referencia: ${refGroupOf(attrRows(bias, attr), shownRate) ?? '—'} · Tolerancia ${fmtTau(tau)}`, M, y + 4);
+    y += 8;
     autoTable(doc, {
       ...tableBase,
       startY: y,
-      head: [['Subgrupo', 'n', 'FPR', 'FNR', 'FOR', 'FDR', 'Conclusión']],
+      head: [['Grupo', 'Casos evaluados', `Tasa ${RATE_NAME[shownRate].sigla}`, 'Diferencia con la referencia', 'Veces la referencia', 'Resultado']],
       body: rows.map((r) => [
-        String(r.attribute_value)
-          + (refGroup != null && String(r.attribute_value) === String(refGroup) ? ' (ref)' : '')
-          + (r.insufficient_sample ? ' *' : ''),
-        num(r.group_size),
-        num(r.fpr_disparity), num(r.fnr_disparity), num(r.for_disparity), num(r.fdr_disparity),
-        verdict(r.fairness_conclusion),
+        r.group, fmtInt(r.n), fmtPct(r.rate), r.isRef ? '—' : fmtPts(r.diffPts), r.isRef ? '1,00×' : fmtTimes(r.times), r.result,
       ]),
       theme: 'grid',
-      headStyles: { fillColor: ROSE, textColor: INK, fontSize: 9, fontStyle: 'bold' },
+      headStyles: { fillColor: ROSE, textColor: INK, fontSize: 8.5, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8.5 },
+      columnStyles: { 1: { halign: 'right' }, 2: { halign: 'right' }, 3: { halign: 'right' }, 4: { halign: 'right' }, 5: { cellWidth: 150 } },
       alternateRowStyles: { fillColor: ROSE_TINT },
       didParseCell: (data) => {
-        if (data.section === 'body' && data.column.index === 6) {
-          data.cell.styles.textColor = data.cell.raw === 'No Equitativo' ? DANGER : SUCCESS;
-          data.cell.styles.fontStyle = 'bold';
+        if (data.section === 'body' && data.column.index === 5) {
+          const raw = String(data.cell.raw);
+          if (raw.startsWith('Fuera')) { data.cell.styles.textColor = DANGER; data.cell.styles.fontStyle = 'bold'; }
+          else if (raw.startsWith('Dentro')) data.cell.styles.textColor = SUCCESS;
+          else data.cell.styles.textColor = MUTED;
         }
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 18;
+    y = (doc as any).lastAutoTable.finalY + 16;
   }
   if (y > H - 60) newPage();
   doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...MUTED);
-  doc.text('Valores = disparidad respecto al grupo de referencia (1.00 = sin diferencia). (ref) = grupo de referencia. * muestra insuficiente (no afecta el veredicto).', M, y);
-  y += 20;
+  doc.text(`Diferencia en puntos porcentuales respecto de la referencia. 2,00× = el doble de errores; 0,50× = la mitad. Menos de ${fmtInt(minN)} casos evaluados = muestra insuficiente (no cuenta para el veredicto).`, M, y, { maxWidth: W - 2 * M });
+  y += 24;
 
   // --- Gráficos (al final) ---
   const addPlot = (title: string, dataUri: string | null) => {
@@ -308,8 +337,32 @@ export async function generatePdfReport(
     newPage();
     doc.setFont('times', 'bold'); doc.setFontSize(15); doc.setTextColor(...INK);
     doc.text('Gráficos del análisis', M, y); y += 22;
-    addPlot('Valores absolutos — Tasa de Falsos Positivos (FPR)', absPlot);
-    addPlot('Disparidad — Tasa de Falsos Positivos (FPR)', dispPlot);
+    addPlot(`${rateTitle} por grupo`, absPlot);
+    addPlot(`Disparidad en ${RATE_NAME[shownRate].nombre} (veces la referencia)`, dispPlot);
+  }
+
+  // --- Anexo: detalle técnico por grupo ---
+  if (bias.length) {
+    newPage();
+    sectionTitle('ANEXO', 'Detalle técnico por grupo');
+    const counts: [string, string][] = [['pp', 'Pred. +'], ['pn', 'Pred. -'], ['fp', 'FP'], ['fn', 'FN'], ['tp', 'VP'], ['tn', 'VN'], ['group_size', 'Tamaño']];
+    const rates: [string, string][] = [['tpr', 'TPR'], ['tnr', 'TNR'], ['npv', 'NPV'], ['precision', 'PPV'], ['accuracy', 'Exactitud'], ['prev', 'Prevalencia']];
+    autoTable(doc, {
+      ...tableBase,
+      startY: y,
+      head: [['Variable', 'Grupo', ...counts.map(([, l]) => l), ...rates.map(([, l]) => l)]],
+      body: bias.map((r) => [
+        r.attribute_name, String(r.attribute_value),
+        ...counts.map(([k]) => fmtInt(r[k])), ...rates.map(([k]) => fmtPct(r[k])),
+      ]),
+      theme: 'grid',
+      headStyles: { fillColor: BURGUNDY, textColor: [255, 255, 255], fontSize: 7, fontStyle: 'bold' },
+      bodyStyles: { fontSize: 7 },
+      alternateRowStyles: { fillColor: ROSE_PAPER },
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor(...MUTED);
+    doc.text('FP/FN = falsos positivos/negativos · VP/VN = verdaderos positivos/negativos · TPR = 1 - FNR · TNR = 1 - FPR · NPV = 1 - FOR · PPV = 1 - FDR.', M, y + 6, { maxWidth: W - 2 * M });
   }
 
   // --- Barra superior de marca + pie de página en TODAS las páginas ---

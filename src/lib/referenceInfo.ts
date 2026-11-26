@@ -36,15 +36,15 @@ export function referenceByAttribute(bias: any[], attrs?: string[]): AttrReferen
 export function refMethodLabel(method?: string, perfMetric?: string): string {
   switch (method) {
     case 'majority':
-      return 'grupo mayoritario (el subgrupo más grande)';
+      return 'grupo más numeroso';
     case 'minority':
       return 'grupo minoritario (el subgrupo más pequeño)';
     case 'best_performance':
       return `grupo con mejor desempeño (menor ${(perfMetric || 'fpr').toUpperCase()})`;
     case 'custom':
-      return 'grupo definido manualmente';
+      return 'personalizado (elegido por ti)';
     default:
-      return 'grupo mayoritario (el subgrupo más grande)';
+      return 'grupo más numeroso';
   }
 }
 

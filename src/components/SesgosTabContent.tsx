@@ -1,94 +1,87 @@
-
 import React from 'react';
-import { AbsolutePlotter } from './bias-analysis/AbsolutePlotter';
-import { DataTable } from './DataTable';
-import { METRIC_TRANSLATIONS } from '../constants';
-import { fmtInt } from '../lib/format';
+import { Download } from 'lucide-react';
+import { DisparityPlotter } from './bias-analysis/DisparityPlotter';
+import { biasMetricsCsv, downloadText, fmtInt, fmtPct, totalCases } from '../lib/results';
 
 interface SesgosTabContentProps {
   results: any;
   BASE_API_URL: string;
 }
 
-export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BASE_API_URL }) => {
-  if (!results) {
-    return (
-      <div className="text-center p-4">
-        <p className="text-gray-500">Ejecuta un análisis para ver los resultados de sesgo.</p>
-      </div>
-    );
-  }
+// Columnas del detalle técnico (las demás solo van en el CSV).
+const COUNT_COLS: [string, string][] = [
+  ['pp', 'Predichos positivos'], ['pn', 'Predichos negativos'],
+  ['fp', 'Falsos positivos'], ['fn', 'Falsos negativos'],
+  ['tp', 'Verdaderos positivos'], ['tn', 'Verdaderos negativos'],
+  ['group_size', 'Tamaño del grupo'],
+];
+const RATE_COLS: [string, string][] = [
+  ['tpr', 'TPR'], ['tnr', 'TNR'], ['npv', 'NPV'], ['precision', 'PPV'],
+  ['accuracy', 'Exactitud'], ['prev', 'Prevalencia observada'],
+];
 
-  // El total de casos es igual en todas las filas: se muestra una vez, no como columna.
-  const groupCounts: any[] = results.tables.group_counts || [];
-  const totalCasos = groupCounts[0]?.['Total Entidades'] ?? groupCounts[0]?.total_entities;
-  const groupCountsSinTotal = groupCounts.map((row: Record<string, unknown>) =>
-    Object.fromEntries(Object.entries(row).filter(([k]) => k !== 'Total Entidades' && k !== 'total_entities'))
-  );
+/** Pestaña "Detalle por grupo": matriz de confusión y todas las métricas (detalle técnico). */
+export const SesgosTabContent: React.FC<SesgosTabContentProps> = ({ results, BASE_API_URL }) => {
+  if (!results) return null;
+  const bias: any[] = results.tables?.bias_metrics || [];
+  const meta = results.metadata || {};
+  const total = totalCases(bias);
+  const fileTag = meta.selected_class ? `_clase_${meta.selected_class}` : '';
 
   return (
-    <div className="space-y-8">
-      {totalCasos != null && (
-        <p className="text-sm text-ink-80">
-          Total de casos en el archivo: <b>{fmtInt(totalCasos)}</b>
-        </p>
-      )}
-      <AbsolutePlotter 
-        groupMetrics={results.tables.group_metrics_for_plotting}
-        protectedAttributes={results.metadata.protected_attributes}
-        BASE_API_URL={BASE_API_URL}
-        classLabel={results.metadata.selected_class}
-      />
-      <DataTable
-        title="Total de instancias por subgrupo"
-        data={groupCountsSinTotal}
-        translateHeader={(h) => METRIC_TRANSLATIONS[h] || h}
-        formatNumber={(v) => String(v)}
-      />
-      <div className="mt-2 mb-6 text-gray-700">
-        <p className="mb-2">
-          Esta tabla presenta un desglose completo de los resultados del modelo por subgrupo, es decir, por cada categoría dentro de las variables protegidas que seleccionaste. Por ejemplo, si estás evaluando la variable “edad”, los subgrupos podrían ser: menos de 25, 25–45 y más de 45.
-        </p>
-        <p className="mb-2">La tabla muestra para cada subgrupo:</p>
-        <ul className="list-disc pl-6 mb-2">
-          <li><b>TP (Verdaderos Positivos):</b> Casos positivos correctamente predichos por el modelo.</li>
-          <li><b>TN (Verdaderos Negativos):</b> Casos negativos correctamente predichos.</li>
-          <li><b>FP (Falsos Positivos):</b> Casos negativos que el modelo clasificó como positivos.</li>
-          <li><b>FN (Falsos Negativos):</b> Casos positivos que el modelo no detectó.</li>
-          <li><b>PP (Positivos Predichos)</b> y <b>PN (Negativos Predichos):</b> Totales de predicciones positivas y negativas hechas por el modelo para ese subgrupo.</li>
-          <li><b>Etiqueta positiva / negativa del grupo:</b> Cantidad real de casos positivos y negativos dentro del subgrupo.</li>
-          <li><b>Tamaño de grupo:</b> Total de instancias pertenecientes a ese subgrupo.</li>
-        </ul>
-        <p className="mb-2 font-semibold">¿Por qué es importante esta tabla?</p>
-        <p className="mb-2">
-          Esta vista te permite comprender cómo se comporta el modelo en cada subgrupo antes de calcular cualquier métrica de sesgo. Es clave para:
-        </p>
-        <ul className="list-disc pl-6 mb-2">
-          <li>Detectar desbalances en los datos que podrían afectar la equidad del modelo.</li>
-          <li>Validar si hay suficiente información por grupo para realizar comparaciones significativas.</li>
-          <li>Interpretar mejor los resultados de disparidad al tener claridad sobre los volúmenes que los sustentan.</li>
-        </ul>
-        <div className="bg-indigo-50 border-l-4 border-burgundy p-4 rounded mt-4">
-          <span className="font-semibold text-burgundy">Recomendación:</span> Pon atención especial a los subgrupos con pocos casos (bajo “Tamaño de grupo”), ya que los resultados en esos grupos pueden ser menos estables o confiables.
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="font-display text-xl font-semibold text-ink">Detalle técnico</h3>
+          <p className="text-sm text-ink-60 max-w-2xl">
+            Matriz de confusión y métricas complementarias por grupo. TPR = 1 − FNR · TNR = 1 − FPR · NPV = 1 − FOR ·
+            PPV = 1 − FDR. {total != null && <>Total de casos en el archivo: <b>{fmtInt(total)}</b>.</>}
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => downloadText(`tabla_completa${fileTag}.csv`, biasMetricsCsv(bias))}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-rose-light bg-white text-burgundy font-semibold hover:border-burgundy"
+        >
+          <Download className="h-4 w-4" /> Descargar tabla completa (.csv)
+        </button>
       </div>
-      <DataTable
-        title="Métricas de error para cada subgrupo"
-        data={results.tables.group_metrics}
-        translateHeader={(h) => METRIC_TRANSLATIONS[h] || h}
-        formatNumber={(v) => String(v)}
+
+      <div className="bg-white rounded-xl border border-rose-light overflow-x-auto">
+        <table className="w-full text-sm min-w-[900px] tabular-nums">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-ink-60 bg-indigo-50">
+              <th className="px-3 py-2 font-semibold">Variable</th>
+              <th className="px-3 py-2 font-semibold">Grupo</th>
+              {[...COUNT_COLS, ...RATE_COLS].map(([, label]) => (
+                <th key={label} className="px-3 py-2 font-semibold text-right">{label}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {bias.map((r, i) => (
+              <tr key={i} className="border-t border-line">
+                <td className="px-3 py-2 text-ink-60">{r.attribute_name}</td>
+                <td className="px-3 py-2 font-medium text-ink">{r.attribute_value}</td>
+                {COUNT_COLS.map(([k]) => <td key={k} className="px-3 py-2 text-right">{fmtInt(r[k])}</td>)}
+                {RATE_COLS.map(([k]) => <td key={k} className="px-3 py-2 text-right">{fmtPct(r[k])}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="text-xs text-ink-60">
+        El CSV incluye además las columnas que no se muestran aquí: ID de modelo, umbral, valor K, proporción predicha
+        positiva (PPR) y todas las disparidades y paridades.
+      </p>
+
+      <DisparityPlotter
+        biasMetrics={bias}
+        protectedAttributes={meta.protected_attributes || []}
+        fairnessThreshold={meta.fairness_threshold || 1.25}
+        BASE_API_URL={BASE_API_URL}
+        classLabel={meta.selected_class}
       />
-      <div className="mt-2 mb-6 text-gray-700">
-        <p className="mb-2">
-          Esta tabla muestra los resultados del modelo desagregados por subgrupo, calculando múltiples métricas de desempeño y error para cada uno. Los subgrupos corresponden a los valores dentro de cada variable protegida (por ejemplo: “mujer” dentro de género, “25–45” dentro de edad, etc.).
-        </p>
-        <p className="mb-2 font-semibold">¿Por qué es importante esta tabla?</p>
-        <ul className="list-disc pl-6 mb-2">
-          <li>Comparar el comportamiento del modelo entre subgrupos, identificando si ciertos grupos están sistemáticamente peor clasificados.</li>
-          <li>Detectar patrones de disparidad, como mayor tasa de falsos positivos o falsos negativos en grupos específicos.</li>
-          <li>Interpretar las métricas de sesgo en contexto, considerando tanto el rendimiento como la prevalencia de los casos.</li>
-        </ul>
-      </div>
     </div>
   );
 };
